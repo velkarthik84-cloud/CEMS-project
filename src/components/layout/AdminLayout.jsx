@@ -7,8 +7,22 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const containerStyle = {
+    minHeight: '100vh',
+    backgroundColor: '#F5F7FA',
+  };
+
+  const mainWrapperStyle = {
+    transition: 'all 0.3s ease',
+    marginLeft: 0,
+  };
+
+  const mainContentStyle = {
+    padding: '1rem',
+  };
+
   return (
-    <div className="min-h-screen bg-background">
+    <div style={containerStyle}>
       {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
@@ -19,15 +33,13 @@ const AdminLayout = () => {
 
       {/* Main Content */}
       <div
-        className={`
-          transition-all duration-300
-          ${sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}
-        `}
+        style={mainWrapperStyle}
+        className={sidebarCollapsed ? 'lg:ml-20' : 'lg:ml-64'}
       >
         <Header
           onMenuClick={() => setSidebarOpen(true)}
         />
-        <main className="p-4 lg:p-6">
+        <main style={mainContentStyle} className="lg:p-6">
           <Outlet />
         </main>
       </div>

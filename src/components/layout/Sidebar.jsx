@@ -48,45 +48,147 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     }
   };
 
+  const sidebarStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    zIndex: 50,
+    height: '100%',
+    backgroundColor: '#1E3A5F',
+    color: '#FFFFFF',
+    transition: 'all 0.3s ease-in-out',
+    width: collapsed ? '5rem' : '16rem',
+    transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const overlayStyle = {
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 40,
+  };
+
+  const logoContainerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: '4rem',
+    padding: '0 1rem',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+  };
+
+  const logoIconStyle = {
+    width: '2.5rem',
+    height: '2.5rem',
+    backgroundColor: '#E91E63',
+    borderRadius: '0.75rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const navStyle = {
+    flex: 1,
+    padding: '1rem 0.75rem',
+    overflowY: 'auto',
+  };
+
+  const navItemStyle = (isActive) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.625rem 0.75rem',
+    borderRadius: '0.5rem',
+    transition: 'all 0.2s ease',
+    marginBottom: '0.25rem',
+    backgroundColor: isActive ? '#E91E63' : 'transparent',
+    color: isActive ? '#FFFFFF' : 'rgba(255, 255, 255, 0.7)',
+    textDecoration: 'none',
+    cursor: 'pointer',
+  });
+
+  const footerStyle = {
+    padding: '0.75rem',
+    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+  };
+
+  const userProfileStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.5rem 0.75rem',
+    marginBottom: '0.5rem',
+  };
+
+  const userAvatarStyle = {
+    width: '2rem',
+    height: '2rem',
+    backgroundColor: 'rgba(233, 30, 99, 0.2)',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+  };
+
+  const collapseButtonStyle = {
+    position: 'absolute',
+    right: '-0.75rem',
+    top: '5rem',
+    width: '1.5rem',
+    height: '1.5rem',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '50%',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#1E3A5F',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+  };
+
   return (
     <>
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          style={overlayStyle}
           onClick={onClose}
+          className="lg:hidden"
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed top-0 left-0 z-50 h-full bg-sidebar text-white
-          transition-all duration-300 ease-in-out
-          ${collapsed ? 'w-20' : 'w-64'}
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
+        style={sidebarStyle}
+        className="lg:translate-x-0"
       >
         {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">V</span>
+        <div style={logoContainerStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={logoIconStyle}>
+              <span style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: '1.125rem' }}>V</span>
             </div>
             {!collapsed && (
-              <span className="font-bold text-xl">Ventixe</span>
+              <span style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>Ventixe</span>
             )}
           </div>
           <button
             onClick={onClose}
-            className="lg:hidden p-1 rounded-lg hover:bg-white/10"
+            style={{ padding: '0.25rem', borderRadius: '0.5rem', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', color: '#FFFFFF' }}
+            className="lg:hidden"
           >
-            <X className="w-5 h-5" />
+            <X style={{ width: '1.25rem', height: '1.25rem' }} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav style={navStyle}>
           {navItems.map((item) => {
             const Icon = iconMap[item.icon];
             const isActive = item.exact
@@ -98,36 +200,39 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 key={item.path}
                 to={item.path}
                 onClick={onClose}
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-lg
-                  transition-all duration-200
-                  ${isActive
-                    ? 'bg-accent text-white'
-                    : 'text-white/70 hover:bg-white/10 hover:text-white'
+                style={navItemStyle(isActive)}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                    e.currentTarget.style.color = '#FFFFFF';
                   }
-                `}
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+                  }
+                }}
               >
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span className="font-medium">{item.label}</span>}
+                <Icon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+                {!collapsed && <span style={{ fontWeight: '500' }}>{item.label}</span>}
               </NavLink>
             );
           })}
         </nav>
 
         {/* User Profile & Logout */}
-        <div className="p-3 border-t border-white/10">
+        <div style={footerStyle}>
           {!collapsed && (
-            <div className="flex items-center gap-3 px-3 py-2 mb-2">
-              <div className="w-8 h-8 bg-accent/20 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium">
-                  {userProfile?.displayName?.[0]?.toUpperCase() || 'A'}
-                </span>
+            <div style={userProfileStyle}>
+              <div style={userAvatarStyle}>
+                {userProfile?.displayName?.[0]?.toUpperCase() || 'A'}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {userProfile?.displayName || 'Admin'}
                 </p>
-                <p className="text-xs text-white/50 truncate">
+                <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {userProfile?.email}
                 </p>
               </div>
@@ -135,23 +240,51 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           )}
           <button
             onClick={handleLogout}
-            className={`
-              flex items-center gap-3 px-3 py-2.5 rounded-lg w-full
-              text-white/70 hover:bg-white/10 hover:text-white
-              transition-all duration-200
-            `}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.625rem 0.75rem',
+              borderRadius: '0.5rem',
+              width: '100%',
+              color: 'rgba(255, 255, 255, 0.7)',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.color = '#FFFFFF';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'rgba(255, 255, 255, 0.7)';
+            }}
           >
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="font-medium">Logout</span>}
+            <LogOut style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
+            {!collapsed && <span style={{ fontWeight: '500' }}>Logout</span>}
           </button>
         </div>
 
         {/* Collapse Button (Desktop only) */}
         <button
           onClick={onToggleCollapse}
-          className="hidden lg:flex absolute -right-3 top-20 w-6 h-6 bg-white rounded-full shadow-md items-center justify-center text-primary hover:bg-gray-100 transition-colors"
+          style={collapseButtonStyle}
+          className="hidden lg:flex"
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#F1F5F9';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#FFFFFF';
+          }}
         >
-          <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+          <ChevronLeft style={{
+            width: '1rem',
+            height: '1rem',
+            transition: 'transform 0.2s ease',
+            transform: collapsed ? 'rotate(180deg)' : 'none'
+          }} />
         </button>
       </aside>
     </>

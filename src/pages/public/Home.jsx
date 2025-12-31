@@ -44,58 +44,245 @@ const Home = () => {
     return format(date, 'MMM dd, yyyy');
   };
 
+  const heroStyle = {
+    position: 'relative',
+    background: 'linear-gradient(135deg, #1E3A5F 0%, #152C4A 50%, #1E3A5F 100%)',
+    overflow: 'hidden',
+  };
+
+  const heroContentStyle = {
+    maxWidth: '80rem',
+    margin: '0 auto',
+    padding: '5rem 1rem',
+    position: 'relative',
+  };
+
+  const heroTitleStyle = {
+    fontSize: '2.5rem',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: '1.5rem',
+    textAlign: 'center',
+  };
+
+  const heroSubtitleStyle = {
+    fontSize: '1.125rem',
+    color: 'rgba(255, 255, 255, 0.8)',
+    maxWidth: '42rem',
+    margin: '0 auto 2.5rem',
+    textAlign: 'center',
+  };
+
+  const searchContainerStyle = {
+    maxWidth: '42rem',
+    margin: '0 auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  };
+
+  const searchInputContainerStyle = {
+    flex: 1,
+    position: 'relative',
+  };
+
+  const searchInputStyle = {
+    width: '100%',
+    padding: '1rem 1rem 1rem 3rem',
+    borderRadius: '0.75rem',
+    fontSize: '1rem',
+    border: 'none',
+    outline: 'none',
+    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+  };
+
+  const statsContainerStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '2rem',
+    marginTop: '3rem',
+  };
+
+  const statItemStyle = {
+    textAlign: 'center',
+  };
+
+  const statValueStyle = {
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  };
+
+  const statLabelStyle = {
+    color: 'rgba(255, 255, 255, 0.7)',
+  };
+
+  const sectionStyle = {
+    padding: '4rem 1rem',
+    maxWidth: '80rem',
+    margin: '0 auto',
+  };
+
+  const sectionHeaderStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '2rem',
+  };
+
+  const sectionTitleStyle = {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: '#1E3A5F',
+  };
+
+  const sectionSubtitleStyle = {
+    color: '#64748B',
+    marginTop: '0.25rem',
+  };
+
+  const gridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gap: '1.5rem',
+  };
+
+  const categorySectionStyle = {
+    padding: '3rem 1rem',
+    backgroundColor: '#FFFFFF',
+    borderBottom: '1px solid #F1F5F9',
+  };
+
+  const categoryContainerStyle = {
+    maxWidth: '80rem',
+    margin: '0 auto',
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '0.75rem',
+  };
+
+  const categoryButtonStyle = (isActive) => ({
+    padding: '0.5rem 1rem',
+    borderRadius: '9999px',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    border: 'none',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    backgroundColor: isActive ? '#1E3A5F' : '#F1F5F9',
+    color: isActive ? '#FFFFFF' : '#64748B',
+  });
+
+  const howItWorksSectionStyle = {
+    padding: '4rem 1rem',
+    maxWidth: '80rem',
+    margin: '0 auto',
+  };
+
+  const howItWorksGridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+    gap: '2rem',
+    marginTop: '3rem',
+  };
+
+  const howItWorksCardStyle = {
+    textAlign: 'center',
+  };
+
+  const howItWorksIconStyle = (color) => ({
+    width: '4rem',
+    height: '4rem',
+    borderRadius: '1rem',
+    backgroundColor: color,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 1rem',
+  });
+
+  const ctaSectionStyle = {
+    padding: '4rem 1rem',
+    backgroundColor: '#1E3A5F',
+    textAlign: 'center',
+  };
+
+  const ctaContentStyle = {
+    maxWidth: '48rem',
+    margin: '0 auto',
+  };
+
+  const ctaTitleStyle = {
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: '1rem',
+  };
+
+  const ctaDescStyle = {
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: '2rem',
+  };
+
+  const ctaButtonsStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+    justifyContent: 'center',
+    alignItems: 'center',
+  };
+
   return (
-    <div>
+    <div style={{ backgroundColor: '#F5F7FA' }}>
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary via-primary-dark to-primary overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28 relative">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6">
-              Discover & Join
-              <span className="text-accent"> Amazing Events</span>
-            </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10">
-              Find workshops, seminars, conferences, and more. Register instantly with
-              QR-based entry and seamless payment.
-            </p>
+      <section style={heroStyle}>
+        <div style={heroContentStyle}>
+          <h1 style={heroTitleStyle}>
+            Discover & Join
+            <span style={{ color: '#E91E63' }}> Amazing Events</span>
+          </h1>
+          <p style={heroSubtitleStyle}>
+            Find workshops, seminars, conferences, and more. Register instantly with
+            QR-based entry and seamless payment.
+          </p>
 
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search events, workshops, seminars..."
-                    className="w-full pl-12 pr-4 py-4 rounded-xl text-text-primary bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-accent"
-                  />
-                </div>
-                <Button size="lg" variant="accent" className="px-8">
-                  Search Events
-                </Button>
+          {/* Search Bar */}
+          <div style={searchContainerStyle}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={searchInputContainerStyle}>
+                <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', color: '#9CA3AF' }} />
+                <input
+                  type="text"
+                  placeholder="Search events, workshops, seminars..."
+                  style={searchInputStyle}
+                />
               </div>
+              <Button size="lg" variant="accent">
+                Search Events
+              </Button>
             </div>
+          </div>
 
-            {/* Stats */}
-            <div className="flex flex-wrap justify-center gap-8 mt-12">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">500+</div>
-                <div className="text-white/70">Events Hosted</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">10K+</div>
-                <div className="text-white/70">Participants</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">50+</div>
-                <div className="text-white/70">Organizations</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-white">4.9</div>
-                <div className="text-white/70 flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-current" /> Rating
-                </div>
+          {/* Stats */}
+          <div style={statsContainerStyle}>
+            <div style={statItemStyle}>
+              <div style={statValueStyle}>500+</div>
+              <div style={statLabelStyle}>Events Hosted</div>
+            </div>
+            <div style={statItemStyle}>
+              <div style={statValueStyle}>10K+</div>
+              <div style={statLabelStyle}>Participants</div>
+            </div>
+            <div style={statItemStyle}>
+              <div style={statValueStyle}>50+</div>
+              <div style={statLabelStyle}>Organizations</div>
+            </div>
+            <div style={statItemStyle}>
+              <div style={statValueStyle}>4.9</div>
+              <div style={{ ...statLabelStyle, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <Star style={{ width: '1rem', height: '1rem', fill: 'currentColor' }} /> Rating
               </div>
             </div>
           </div>
@@ -103,99 +290,77 @@ const Home = () => {
       </section>
 
       {/* Categories */}
-      <section className="py-12 bg-white border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap justify-center gap-3">
+      <section style={categorySectionStyle}>
+        <div style={categoryContainerStyle}>
+          <button
+            onClick={() => setSelectedCategory('all')}
+            style={categoryButtonStyle(selectedCategory === 'all')}
+          >
+            All Events
+          </button>
+          {EVENT_CATEGORIES.map((category) => (
             <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                selectedCategory === 'all'
-                  ? 'bg-primary text-white'
-                  : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
-              }`}
+              key={category.value}
+              onClick={() => setSelectedCategory(category.value)}
+              style={categoryButtonStyle(selectedCategory === category.value)}
             >
-              All Events
+              {category.label}
             </button>
-            {EVENT_CATEGORIES.map((category) => (
-              <button
-                key={category.value}
-                onClick={() => setSelectedCategory(category.value)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category.value
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-text-secondary hover:bg-gray-200'
-                }`}
-              >
-                {category.label}
-              </button>
-            ))}
-          </div>
+          ))}
         </div>
       </section>
 
       {/* Featured Events */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                Featured Events
-              </h2>
-              <p className="text-text-secondary mt-1">
-                Hand-picked events you don't want to miss
-              </p>
-            </div>
-            <Link to="/events">
-              <Button variant="ghost" icon={ArrowRight} iconPosition="right">
-                View All
-              </Button>
-            </Link>
+      <section style={sectionStyle}>
+        <div style={sectionHeaderStyle}>
+          <div>
+            <h2 style={sectionTitleStyle}>Featured Events</h2>
+            <p style={sectionSubtitleStyle}>Hand-picked events you don't want to miss</p>
           </div>
-
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white rounded-xl shadow-sm animate-pulse">
-                  <div className="h-48 bg-gray-200 rounded-t-xl" />
-                  <div className="p-6 space-y-3">
-                    <div className="h-4 bg-gray-200 rounded w-1/4" />
-                    <div className="h-6 bg-gray-200 rounded w-3/4" />
-                    <div className="h-4 bg-gray-200 rounded w-1/2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : featuredEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredEvents.map((event) => (
-                <EventCard key={event.id} event={event} formatDate={formatDate} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-text-primary mb-2">
-                No events yet
-              </h3>
-              <p className="text-text-secondary">
-                Check back later for upcoming events
-              </p>
-            </div>
-          )}
+          <Link to="/events">
+            <Button variant="ghost" icon={ArrowRight} iconPosition="right">
+              View All
+            </Button>
+          </Link>
         </div>
+
+        {loading ? (
+          <div style={gridStyle}>
+            {[1, 2, 3].map((i) => (
+              <div key={i} style={{ backgroundColor: '#FFFFFF', borderRadius: '0.75rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+                <div style={{ height: '12rem', backgroundColor: '#E5E7EB', borderRadius: '0.75rem 0.75rem 0 0' }} />
+                <div style={{ padding: '1.5rem' }}>
+                  <div style={{ height: '1rem', backgroundColor: '#E5E7EB', borderRadius: '0.25rem', width: '25%', marginBottom: '0.75rem' }} />
+                  <div style={{ height: '1.5rem', backgroundColor: '#E5E7EB', borderRadius: '0.25rem', width: '75%', marginBottom: '0.75rem' }} />
+                  <div style={{ height: '1rem', backgroundColor: '#E5E7EB', borderRadius: '0.25rem', width: '50%' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : featuredEvents.length > 0 ? (
+          <div style={gridStyle}>
+            {featuredEvents.map((event) => (
+              <EventCard key={event.id} event={event} formatDate={formatDate} />
+            ))}
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+            <Calendar style={{ width: '4rem', height: '4rem', color: '#D1D5DB', margin: '0 auto 1rem' }} />
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '500', color: '#1E3A5F', marginBottom: '0.5rem' }}>
+              No events yet
+            </h3>
+            <p style={{ color: '#64748B' }}>Check back later for upcoming events</p>
+          </div>
+        )}
       </section>
 
       {/* Upcoming Events */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
+      <section style={{ ...sectionStyle, backgroundColor: '#F8FAFC', padding: '4rem 1rem' }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+          <div style={sectionHeaderStyle}>
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-                Upcoming Events
-              </h2>
-              <p className="text-text-secondary mt-1">
-                Don't miss out on these amazing opportunities
-              </p>
+              <h2 style={sectionTitleStyle}>Upcoming Events</h2>
+              <p style={sectionSubtitleStyle}>Don't miss out on these amazing opportunities</p>
             </div>
             <Link to="/events">
               <Button variant="ghost" icon={ArrowRight} iconPosition="right">
@@ -205,88 +370,75 @@ const Home = () => {
           </div>
 
           {upcomingEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div style={{ ...gridStyle, gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}>
               {upcomingEvents.map((event) => (
                 <EventCard key={event.id} event={event} formatDate={formatDate} compact />
               ))}
             </div>
           ) : (
-            <div className="text-center py-12">
-              <p className="text-text-secondary">No upcoming events available</p>
+            <div style={{ textAlign: 'center', padding: '3rem 0' }}>
+              <p style={{ color: '#64748B' }}>No upcoming events available</p>
             </div>
           )}
         </div>
       </section>
 
       {/* How It Works */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-text-primary">
-              How It Works
-            </h2>
-            <p className="text-text-secondary mt-2">
-              Get started in just 3 simple steps
+      <section style={howItWorksSectionStyle}>
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <h2 style={sectionTitleStyle}>How It Works</h2>
+          <p style={sectionSubtitleStyle}>Get started in just 3 simple steps</p>
+        </div>
+
+        <div style={howItWorksGridStyle}>
+          <div style={howItWorksCardStyle}>
+            <div style={howItWorksIconStyle('rgba(233, 30, 99, 0.1)')}>
+              <Search style={{ width: '2rem', height: '2rem', color: '#E91E63' }} />
+            </div>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E3A5F', marginBottom: '0.5rem' }}>
+              Browse Events
+            </h3>
+            <p style={{ color: '#64748B' }}>
+              Explore a wide range of events from workshops to conferences
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-accent" />
-              </div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Browse Events
-              </h3>
-              <p className="text-text-secondary">
-                Explore a wide range of events from workshops to conferences
-              </p>
+          <div style={howItWorksCardStyle}>
+            <div style={howItWorksIconStyle('rgba(30, 58, 95, 0.1)')}>
+              <Users style={{ width: '2rem', height: '2rem', color: '#1E3A5F' }} />
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Register & Pay
-              </h3>
-              <p className="text-text-secondary">
-                Fill in your details and complete payment securely
-              </p>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E3A5F', marginBottom: '0.5rem' }}>
+              Register & Pay
+            </h3>
+            <p style={{ color: '#64748B' }}>
+              Fill in your details and complete payment securely
+            </p>
+          </div>
+          <div style={howItWorksCardStyle}>
+            <div style={howItWorksIconStyle('rgba(16, 185, 129, 0.1)')}>
+              <TrendingUp style={{ width: '2rem', height: '2rem', color: '#10B981' }} />
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-8 h-8 text-success" />
-              </div>
-              <h3 className="text-lg font-semibold text-text-primary mb-2">
-                Attend & Learn
-              </h3>
-              <p className="text-text-secondary">
-                Use your QR code for entry and enjoy the event
-              </p>
-            </div>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E3A5F', marginBottom: '0.5rem' }}>
+              Attend & Learn
+            </h3>
+            <p style={{ color: '#64748B' }}>
+              Use your QR code for entry and enjoy the event
+            </p>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-primary">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-            Ready to Host Your Own Event?
-          </h2>
-          <p className="text-white/80 mb-8">
+      <section style={ctaSectionStyle}>
+        <div style={ctaContentStyle}>
+          <h2 style={ctaTitleStyle}>Ready to Host Your Own Event?</h2>
+          <p style={ctaDescStyle}>
             Create and manage events with our powerful dashboard. QR-based entry,
             payment processing, and real-time analytics included.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div style={ctaButtonsStyle}>
             <Link to="/register">
               <Button size="lg" variant="accent">
                 Get Started Free
-              </Button>
-            </Link>
-            <Link to="/contact">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary">
-                Contact Sales
               </Button>
             </Link>
           </div>
@@ -298,69 +450,151 @@ const Home = () => {
 
 // Event Card Component
 const EventCard = ({ event, formatDate, compact = false }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.75rem',
+    overflow: 'hidden',
+    boxShadow: isHovered ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease',
+    transform: isHovered ? 'translateY(-4px)' : 'none',
+    cursor: 'pointer',
+  };
+
+  const imageContainerStyle = {
+    position: 'relative',
+    height: compact ? '9rem' : '12rem',
+    overflow: 'hidden',
+  };
+
+  const imageStyle = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    transition: 'transform 0.3s ease',
+    transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+  };
+
+  const placeholderStyle = {
+    width: '100%',
+    height: '100%',
+    background: 'linear-gradient(135deg, #1E3A5F 0%, #152C4A 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const categoryBadgeStyle = {
+    position: 'absolute',
+    top: '0.75rem',
+    left: '0.75rem',
+    padding: '0.25rem 0.75rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    color: '#1E3A5F',
+  };
+
+  const priceBadgeStyle = {
+    position: 'absolute',
+    top: '0.75rem',
+    right: '0.75rem',
+    padding: '0.25rem 0.75rem',
+    backgroundColor: '#E91E63',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+  };
+
+  const contentStyle = {
+    padding: compact ? '1rem' : '1.5rem',
+  };
+
+  const titleStyle = {
+    fontWeight: '600',
+    color: '#1E3A5F',
+    marginBottom: '0.5rem',
+    fontSize: compact ? '0.875rem' : '1.125rem',
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+  };
+
+  const metaStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '0.875rem',
+    color: '#64748B',
+    marginBottom: '0.375rem',
+  };
+
+  const footerStyle = {
+    marginTop: '1rem',
+    paddingTop: '1rem',
+    borderTop: '1px solid #F1F5F9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
+
   return (
     <Link to={`/events/${event.id}`}>
-      <Card className={`overflow-hidden group ${compact ? '' : ''}`} hover padding="none">
-        <div className={`relative ${compact ? 'h-36' : 'h-48'} overflow-hidden`}>
+      <div
+        style={cardStyle}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div style={imageContainerStyle}>
           {event.bannerUrl ? (
-            <img
-              src={event.bannerUrl}
-              alt={event.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
+            <img src={event.bannerUrl} alt={event.title} style={imageStyle} />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
-              <Calendar className="w-12 h-12 text-white/50" />
+            <div style={placeholderStyle}>
+              <Calendar style={{ width: '3rem', height: '3rem', color: 'rgba(255,255,255,0.5)' }} />
             </div>
           )}
-          <div className="absolute top-3 left-3">
-            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-primary">
-              {event.category}
-            </span>
-          </div>
+          <div style={categoryBadgeStyle}>{event.category}</div>
           {event.fee > 0 && (
-            <div className="absolute top-3 right-3">
-              <span className="px-3 py-1 bg-accent text-white rounded-full text-xs font-bold">
-                ₹{event.fee}
-              </span>
-            </div>
+            <div style={priceBadgeStyle}>₹{event.fee}</div>
           )}
         </div>
-        <div className={compact ? 'p-4' : 'p-6'}>
-          <h3 className={`font-semibold text-text-primary mb-2 line-clamp-2 ${compact ? 'text-sm' : 'text-lg'}`}>
-            {event.title}
-          </h3>
-          <div className="space-y-1.5 text-sm text-text-secondary">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
+        <div style={contentStyle}>
+          <h3 style={titleStyle}>{event.title}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+            <div style={metaStyle}>
+              <Calendar style={{ width: '1rem', height: '1rem' }} />
               {formatDate(event.eventDate)}
             </div>
             {!compact && (
               <>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
+                <div style={metaStyle}>
+                  <Clock style={{ width: '1rem', height: '1rem' }} />
                   {event.startTime} - {event.endTime}
                 </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4" />
+                <div style={metaStyle}>
+                  <MapPin style={{ width: '1rem', height: '1rem' }} />
                   {event.type === 'online' ? 'Online Event' : event.venue || 'TBA'}
                 </div>
               </>
             )}
           </div>
           {!compact && (
-            <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-text-secondary">
-                <Users className="w-4 h-4" />
+            <div style={footerStyle}>
+              <div style={{ ...metaStyle, marginBottom: 0 }}>
+                <Users style={{ width: '1rem', height: '1rem' }} />
                 {event.currentCount || 0}/{event.maxParticipants} registered
               </div>
-              <span className="text-primary font-medium text-sm group-hover:underline">
+              <span style={{ color: '#1E3A5F', fontWeight: '500', fontSize: '0.875rem' }}>
                 View Details →
               </span>
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </Link>
   );
 };

@@ -1,19 +1,3 @@
-const variants = {
-  default: 'bg-gray-100 text-gray-700',
-  primary: 'bg-primary/10 text-primary',
-  accent: 'bg-accent/10 text-accent',
-  success: 'bg-success-light text-green-700',
-  warning: 'bg-warning-light text-yellow-700',
-  error: 'bg-error-light text-red-700',
-  info: 'bg-info-light text-blue-700',
-};
-
-const sizes = {
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-2.5 py-1 text-xs',
-  lg: 'px-3 py-1.5 text-sm',
-};
-
 const Badge = ({
   children,
   variant = 'default',
@@ -21,29 +5,52 @@ const Badge = ({
   dot = false,
   className = '',
 }) => {
+  const variantStyles = {
+    default: { backgroundColor: '#F1F5F9', color: '#475569' },
+    primary: { backgroundColor: 'rgba(30, 58, 95, 0.1)', color: '#1E3A5F' },
+    accent: { backgroundColor: 'rgba(233, 30, 99, 0.1)', color: '#E91E63' },
+    success: { backgroundColor: '#D1FAE5', color: '#059669' },
+    warning: { backgroundColor: '#FEF3C7', color: '#D97706' },
+    error: { backgroundColor: '#FEE2E2', color: '#DC2626' },
+    info: { backgroundColor: '#DBEAFE', color: '#2563EB' },
+  };
+
+  const sizeStyles = {
+    sm: { padding: '0.125rem 0.5rem', fontSize: '0.75rem' },
+    md: { padding: '0.25rem 0.625rem', fontSize: '0.75rem' },
+    lg: { padding: '0.375rem 0.75rem', fontSize: '0.875rem' },
+  };
+
+  const dotColors = {
+    default: '#6B7280',
+    primary: '#1E3A5F',
+    accent: '#E91E63',
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    info: '#3B82F6',
+  };
+
+  const badgeStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    fontWeight: '500',
+    borderRadius: '9999px',
+    ...variantStyles[variant],
+    ...sizeStyles[size],
+  };
+
+  const dotStyle = {
+    width: '0.375rem',
+    height: '0.375rem',
+    borderRadius: '50%',
+    marginRight: '0.375rem',
+    backgroundColor: dotColors[variant],
+  };
+
   return (
-    <span
-      className={`
-        inline-flex items-center font-medium rounded-full
-        ${variants[variant]}
-        ${sizes[size]}
-        ${className}
-      `}
-    >
-      {dot && (
-        <span
-          className={`
-            w-1.5 h-1.5 rounded-full mr-1.5
-            ${variant === 'success' ? 'bg-green-500' : ''}
-            ${variant === 'warning' ? 'bg-yellow-500' : ''}
-            ${variant === 'error' ? 'bg-red-500' : ''}
-            ${variant === 'info' ? 'bg-blue-500' : ''}
-            ${variant === 'primary' ? 'bg-primary' : ''}
-            ${variant === 'accent' ? 'bg-accent' : ''}
-            ${variant === 'default' ? 'bg-gray-500' : ''}
-          `}
-        />
-      )}
+    <span style={badgeStyle} className={className}>
+      {dot && <span style={dotStyle} />}
       {children}
     </span>
   );

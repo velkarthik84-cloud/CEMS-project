@@ -15,62 +15,111 @@ const Input = forwardRef(({
   ...props
 }, ref) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const isPassword = type === 'password';
   const inputType = isPassword ? (showPassword ? 'text' : 'password') : type;
 
+  const containerStyle = {
+    width: fullWidth ? '100%' : 'auto',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    color: '#1E3A5F',
+    marginBottom: '0.375rem',
+  };
+
+  const inputWrapperStyle = {
+    position: 'relative',
+  };
+
+  const iconStyle = {
+    position: 'absolute',
+    left: '0.75rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    color: '#64748B',
+    width: '1.25rem',
+    height: '1.25rem',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '0.625rem 1rem',
+    paddingLeft: Icon ? '2.5rem' : '1rem',
+    paddingRight: isPassword ? '2.5rem' : '1rem',
+    border: `1px solid ${error ? '#EF4444' : isFocused ? '#1E3A5F' : '#E2E8F0'}`,
+    borderRadius: '0.5rem',
+    backgroundColor: disabled ? '#F8FAFC' : '#FFFFFF',
+    color: '#1E3A5F',
+    fontSize: '0.875rem',
+    transition: 'all 0.2s ease',
+    outline: 'none',
+    boxShadow: isFocused ? `0 0 0 3px ${error ? 'rgba(239, 68, 68, 0.1)' : 'rgba(30, 58, 95, 0.1)'}` : 'none',
+    cursor: disabled ? 'not-allowed' : 'text',
+  };
+
+  const passwordToggleStyle = {
+    position: 'absolute',
+    right: '0.75rem',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: '#64748B',
+    padding: '0.25rem',
+  };
+
+  const helperStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    marginTop: '0.375rem',
+    fontSize: '0.875rem',
+    color: error ? '#EF4444' : '#64748B',
+  };
+
   return (
-    <div className={`${fullWidth ? 'w-full' : ''} ${className}`}>
+    <div style={containerStyle} className={className}>
       {label && (
-        <label className="block text-sm font-medium text-text-primary mb-1.5">
+        <label style={labelStyle}>
           {label}
-          {required && <span className="text-error ml-1">*</span>}
+          {required && <span style={{ color: '#EF4444', marginLeft: '0.25rem' }}>*</span>}
         </label>
       )}
-      <div className="relative">
+      <div style={inputWrapperStyle}>
         {Icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
-            <Icon className="w-5 h-5" />
-          </div>
+          <Icon style={iconStyle} />
         )}
         <input
           ref={ref}
           type={inputType}
           placeholder={placeholder}
           disabled={disabled}
-          className={`
-            w-full px-4 py-2.5
-            ${Icon ? 'pl-10' : ''}
-            ${isPassword ? 'pr-10' : ''}
-            border rounded-lg
-            bg-white text-text-primary
-            placeholder:text-text-light
-            transition-all duration-200
-            ${error
-              ? 'border-error focus:border-error focus:ring-error/20'
-              : 'border-gray-200 focus:border-primary focus:ring-primary/20'
-            }
-            focus:outline-none focus:ring-2
-            disabled:bg-gray-50 disabled:cursor-not-allowed
-          `}
+          style={inputStyle}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           {...props}
         />
         {isPassword && (
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+            style={passwordToggleStyle}
           >
             {showPassword ? (
-              <EyeOff className="w-5 h-5" />
+              <EyeOff style={{ width: '1.25rem', height: '1.25rem' }} />
             ) : (
-              <Eye className="w-5 h-5" />
+              <Eye style={{ width: '1.25rem', height: '1.25rem' }} />
             )}
           </button>
         )}
       </div>
       {(error || helperText) && (
-        <div className={`flex items-center mt-1.5 text-sm ${error ? 'text-error' : 'text-text-secondary'}`}>
-          {error && <AlertCircle className="w-4 h-4 mr-1" />}
+        <div style={helperStyle}>
+          {error && <AlertCircle style={{ width: '1rem', height: '1rem', marginRight: '0.25rem' }} />}
           {error || helperText}
         </div>
       )}

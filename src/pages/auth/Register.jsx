@@ -65,47 +65,201 @@ const Register = () => {
     }
   };
 
+  const containerStyle = {
+    minHeight: '100vh',
+    backgroundColor: '#F5F7FA',
+    display: 'flex',
+  };
+
+  const leftSideStyle = {
+    flex: 1,
+    backgroundColor: '#1E3A5F',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '3rem',
+  };
+
+  const leftContentStyle = {
+    maxWidth: '32rem',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  };
+
+  const leftIconStyle = {
+    width: '6rem',
+    height: '6rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '1rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto 2rem',
+  };
+
+  const leftTitleStyle = {
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+    marginBottom: '1rem',
+  };
+
+  const leftDescStyle = {
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: '1.125rem',
+    marginBottom: '2rem',
+  };
+
+  const stepCardStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: '0.5rem',
+    padding: '1rem',
+    marginBottom: '1rem',
+    textAlign: 'left',
+  };
+
+  const stepNumberStyle = {
+    width: '2.5rem',
+    height: '2.5rem',
+    backgroundColor: '#E91E63',
+    borderRadius: '0.5rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 'bold',
+    flexShrink: 0,
+  };
+
+  const rightSideStyle = {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2rem',
+  };
+
+  const formContainerStyle = {
+    width: '100%',
+    maxWidth: '28rem',
+  };
+
+  const logoContainerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    marginBottom: '2rem',
+  };
+
+  const logoIconStyle = {
+    width: '3rem',
+    height: '3rem',
+    backgroundColor: '#1E3A5F',
+    borderRadius: '0.75rem',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const titleStyle = {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: '#1E3A5F',
+    marginBottom: '0.5rem',
+  };
+
+  const subtitleStyle = {
+    color: '#64748B',
+    marginBottom: '2rem',
+  };
+
+  const formStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem',
+  };
+
+  const checkboxLabelStyle = {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.5rem',
+    cursor: 'pointer',
+  };
+
+  const checkboxStyle = {
+    width: '1rem',
+    height: '1rem',
+    marginTop: '0.125rem',
+    borderRadius: '0.25rem',
+    border: '1px solid #D1D5DB',
+    accentColor: '#1E3A5F',
+  };
+
+  const dividerStyle = {
+    position: 'relative',
+    margin: '1.5rem 0',
+  };
+
+  const dividerLineStyle = {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+  };
+
+  const dividerTextStyle = {
+    position: 'relative',
+    display: 'flex',
+    justifyContent: 'center',
+    fontSize: '0.875rem',
+  };
+
+  const loginTextStyle = {
+    marginTop: '2rem',
+    textAlign: 'center',
+    color: '#64748B',
+  };
+
+  const linkStyle = {
+    color: '#1E3A5F',
+    fontWeight: '500',
+    textDecoration: 'none',
+  };
+
   return (
-    <div className="min-h-screen bg-background flex">
+    <div style={containerStyle}>
       {/* Left Side - Image/Illustration */}
-      <div className="hidden lg:flex flex-1 bg-primary items-center justify-center p-12">
-        <div className="max-w-lg text-white text-center">
-          <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
-            <Calendar className="w-12 h-12" />
+      <div style={leftSideStyle} className="hidden lg:flex">
+        <div style={leftContentStyle}>
+          <div style={leftIconStyle}>
+            <Calendar style={{ width: '3rem', height: '3rem' }} />
           </div>
-          <h2 className="text-3xl font-bold mb-4">
-            Join Our Platform
-          </h2>
-          <p className="text-white/70 text-lg">
+          <h2 style={leftTitleStyle}>Join Our Platform</h2>
+          <p style={leftDescStyle}>
             Create your account to start managing events, registering for workshops,
             and accessing exclusive content.
           </p>
-          <div className="mt-8 space-y-4">
-            <div className="flex items-center gap-4 bg-white/10 rounded-lg p-4">
-              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">1</span>
-              </div>
-              <div className="text-left">
-                <div className="font-medium">Create Account</div>
-                <div className="text-sm text-white/70">Sign up in seconds</div>
+          <div>
+            <div style={stepCardStyle}>
+              <div style={stepNumberStyle}>1</div>
+              <div>
+                <div style={{ fontWeight: '500' }}>Create Account</div>
+                <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)' }}>Sign up in seconds</div>
               </div>
             </div>
-            <div className="flex items-center gap-4 bg-white/10 rounded-lg p-4">
-              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">2</span>
-              </div>
-              <div className="text-left">
-                <div className="font-medium">Browse Events</div>
-                <div className="text-sm text-white/70">Find events that interest you</div>
+            <div style={stepCardStyle}>
+              <div style={stepNumberStyle}>2</div>
+              <div>
+                <div style={{ fontWeight: '500' }}>Browse Events</div>
+                <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)' }}>Find events that interest you</div>
               </div>
             </div>
-            <div className="flex items-center gap-4 bg-white/10 rounded-lg p-4">
-              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">3</span>
-              </div>
-              <div className="text-left">
-                <div className="font-medium">Register & Attend</div>
-                <div className="text-sm text-white/70">Get your QR entry pass</div>
+            <div style={stepCardStyle}>
+              <div style={stepNumberStyle}>3</div>
+              <div>
+                <div style={{ fontWeight: '500' }}>Register & Attend</div>
+                <div style={{ fontSize: '0.875rem', color: 'rgba(255, 255, 255, 0.7)' }}>Get your QR entry pass</div>
               </div>
             </div>
           </div>
@@ -113,26 +267,22 @@ const Register = () => {
       </div>
 
       {/* Right Side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
+      <div style={rightSideStyle}>
+        <div style={formContainerStyle}>
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-white" />
+          <div style={logoContainerStyle}>
+            <div style={logoIconStyle}>
+              <Calendar style={{ width: '1.5rem', height: '1.5rem', color: '#FFFFFF' }} />
             </div>
-            <span className="font-bold text-2xl text-text-primary">Ventixe</span>
+            <span style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#1E3A5F' }}>Ventixe</span>
           </div>
 
           {/* Welcome Text */}
-          <h1 className="text-2xl font-bold text-text-primary mb-2">
-            Create an account
-          </h1>
-          <p className="text-text-secondary mb-8">
-            Fill in your details to get started with Ventixe.
-          </p>
+          <h1 style={titleStyle}>Create an account</h1>
+          <p style={subtitleStyle}>Fill in your details to get started with Ventixe.</p>
 
           {/* Register Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} style={formStyle}>
             <Input
               label="Full Name"
               type="text"
@@ -169,41 +319,28 @@ const Register = () => {
               {...register('confirmPassword')}
             />
 
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                required
-                className="w-4 h-4 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <span className="text-sm text-text-secondary">
+            <label style={checkboxLabelStyle}>
+              <input type="checkbox" required style={checkboxStyle} />
+              <span style={{ fontSize: '0.875rem', color: '#64748B' }}>
                 I agree to the{' '}
-                <Link to="/terms" className="text-primary hover:underline">
-                  Terms of Service
-                </Link>{' '}
+                <Link to="/terms" style={linkStyle}>Terms of Service</Link>{' '}
                 and{' '}
-                <Link to="/privacy" className="text-primary hover:underline">
-                  Privacy Policy
-                </Link>
+                <Link to="/privacy" style={linkStyle}>Privacy Policy</Link>
               </span>
             </label>
 
-            <Button
-              type="submit"
-              fullWidth
-              size="lg"
-              loading={loading}
-            >
+            <Button type="submit" fullWidth size="lg" loading={loading}>
               Create Account
             </Button>
           </form>
 
           {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+          <div style={dividerStyle}>
+            <div style={dividerLineStyle}>
+              <div style={{ width: '100%', borderTop: '1px solid #E5E7EB' }} />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-background text-text-secondary">
+            <div style={dividerTextStyle}>
+              <span style={{ padding: '0 1rem', backgroundColor: '#F5F7FA', color: '#64748B' }}>
                 Or sign up with
               </span>
             </div>
@@ -218,33 +355,19 @@ const Register = () => {
             onClick={handleGoogleLogin}
             disabled={loading}
           >
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
+            <svg style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }} viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
             Continue with Google
           </Button>
 
           {/* Login Link */}
-          <p className="mt-8 text-center text-text-secondary">
+          <p style={loginTextStyle}>
             Already have an account?{' '}
-            <Link to="/login" className="text-primary font-medium hover:underline">
-              Sign in
-            </Link>
+            <Link to="/login" style={linkStyle}>Sign in</Link>
           </p>
         </div>
       </div>

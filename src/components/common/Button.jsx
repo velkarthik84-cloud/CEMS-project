@@ -1,23 +1,6 @@
 import { forwardRef } from 'react';
 import { Loader2 } from 'lucide-react';
 
-const variants = {
-  primary: 'bg-primary text-white hover:bg-primary-dark',
-  secondary: 'bg-gray-100 text-primary hover:bg-gray-200',
-  accent: 'bg-accent text-white hover:bg-accent-dark',
-  outline: 'border-2 border-primary text-primary hover:bg-primary hover:text-white',
-  ghost: 'text-primary hover:bg-gray-100',
-  danger: 'bg-error text-white hover:bg-red-600',
-  success: 'bg-success text-white hover:bg-green-600',
-};
-
-const sizes = {
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
-  xl: 'px-8 py-4 text-lg',
-};
-
 const Button = forwardRef(({
   children,
   variant = 'primary',
@@ -32,42 +15,114 @@ const Button = forwardRef(({
   onClick,
   ...props
 }, ref) => {
-  const baseStyles = `
-    inline-flex items-center justify-center
-    font-medium rounded-lg
-    transition-all duration-200
-    focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2
-    disabled:opacity-50 disabled:cursor-not-allowed
-  `;
+  const baseStyles = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: '500',
+    borderRadius: '0.5rem',
+    transition: 'all 0.2s ease',
+    cursor: disabled || loading ? 'not-allowed' : 'pointer',
+    opacity: disabled || loading ? 0.6 : 1,
+    border: 'none',
+    outline: 'none',
+  };
+
+  const variantStyles = {
+    primary: {
+      backgroundColor: '#1E3A5F',
+      color: '#FFFFFF',
+    },
+    secondary: {
+      backgroundColor: '#F1F5F9',
+      color: '#1E3A5F',
+    },
+    accent: {
+      backgroundColor: '#E91E63',
+      color: '#FFFFFF',
+    },
+    outline: {
+      backgroundColor: 'transparent',
+      color: '#1E3A5F',
+      border: '2px solid #1E3A5F',
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+      color: '#1E3A5F',
+    },
+    danger: {
+      backgroundColor: '#EF4444',
+      color: '#FFFFFF',
+    },
+    success: {
+      backgroundColor: '#10B981',
+      color: '#FFFFFF',
+    },
+  };
+
+  const sizeStyles = {
+    sm: { padding: '0.375rem 0.75rem', fontSize: '0.875rem' },
+    md: { padding: '0.5rem 1rem', fontSize: '0.875rem' },
+    lg: { padding: '0.75rem 1.5rem', fontSize: '1rem' },
+    xl: { padding: '1rem 2rem', fontSize: '1.125rem' },
+  };
+
+  const combinedStyles = {
+    ...baseStyles,
+    ...variantStyles[variant],
+    ...sizeStyles[size],
+    ...(fullWidth ? { width: '100%' } : {}),
+  };
+
+  const handleMouseEnter = (e) => {
+    if (disabled || loading) return;
+    if (variant === 'primary') {
+      e.target.style.backgroundColor = '#152C4A';
+    } else if (variant === 'accent') {
+      e.target.style.backgroundColor = '#C2185B';
+    } else if (variant === 'secondary' || variant === 'ghost') {
+      e.target.style.backgroundColor = '#E2E8F0';
+    } else if (variant === 'outline') {
+      e.target.style.backgroundColor = '#1E3A5F';
+      e.target.style.color = '#FFFFFF';
+    } else if (variant === 'danger') {
+      e.target.style.backgroundColor = '#DC2626';
+    } else if (variant === 'success') {
+      e.target.style.backgroundColor = '#059669';
+    }
+  };
+
+  const handleMouseLeave = (e) => {
+    if (disabled || loading) return;
+    e.target.style.backgroundColor = variantStyles[variant].backgroundColor;
+    e.target.style.color = variantStyles[variant].color;
+  };
 
   return (
     <button
       ref={ref}
       type={type}
-      className={`
-        ${baseStyles}
-        ${variants[variant]}
-        ${sizes[size]}
-        ${fullWidth ? 'w-full' : ''}
-        ${className}
-      `}
+      style={combinedStyles}
+      className={className}
       disabled={disabled || loading}
       onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       {...props}
     >
       {loading ? (
         <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          <Loader2 style={{ width: '1rem', height: '1rem', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
           Loading...
         </>
       ) : (
         <>
           {Icon && iconPosition === 'left' && (
-            <Icon className="w-4 h-4 mr-2" />
+            <Icon style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
           )}
           {children}
           {Icon && iconPosition === 'right' && (
-            <Icon className="w-4 h-4 ml-2" />
+            <Icon style={{ width: '1rem', height: '1rem', marginLeft: '0.5rem' }} />
           )}
         </>
       )}

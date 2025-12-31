@@ -26,66 +26,212 @@ const Header = ({ onMenuClick, title }) => {
     }
   };
 
+  const headerStyle = {
+    position: 'sticky',
+    top: 0,
+    zIndex: 30,
+    backgroundColor: '#FFFFFF',
+    borderBottom: '1px solid #F1F5F9',
+  };
+
+  const containerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: '4rem',
+    padding: '0 1rem',
+  };
+
+  const leftSideStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  };
+
+  const menuButtonStyle = {
+    padding: '0.5rem',
+    borderRadius: '0.5rem',
+    color: '#64748B',
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+  };
+
+  const titleStyle = {
+    fontSize: '1.25rem',
+    fontWeight: '600',
+    color: '#1E3A5F',
+  };
+
+  const searchContainerStyle = {
+    flex: 1,
+    maxWidth: '28rem',
+    margin: '0 1rem',
+    position: 'relative',
+  };
+
+  const searchInputStyle = {
+    width: '100%',
+    padding: '0.5rem 1rem 0.5rem 2.5rem',
+    backgroundColor: '#F8FAFC',
+    border: '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    outline: 'none',
+  };
+
+  const rightSideStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  };
+
+  const iconButtonStyle = {
+    position: 'relative',
+    padding: '0.5rem',
+    borderRadius: '0.5rem',
+    color: '#64748B',
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+  };
+
+  const notificationDotStyle = {
+    position: 'absolute',
+    top: '0.25rem',
+    right: '0.25rem',
+    width: '0.5rem',
+    height: '0.5rem',
+    backgroundColor: '#E91E63',
+    borderRadius: '50%',
+  };
+
+  const userButtonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.5rem',
+    borderRadius: '0.5rem',
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+  };
+
+  const avatarStyle = {
+    width: '2rem',
+    height: '2rem',
+    backgroundColor: '#1E3A5F',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  };
+
+  const dropdownStyle = {
+    position: 'absolute',
+    right: 0,
+    marginTop: '0.5rem',
+    width: '12rem',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.75rem',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+    border: '1px solid #F1F5F9',
+    zIndex: 50,
+    padding: '0.25rem 0',
+  };
+
+  const dropdownItemStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    padding: '0.5rem 1rem',
+    fontSize: '0.875rem',
+    color: '#1E3A5F',
+    textDecoration: 'none',
+    backgroundColor: 'transparent',
+    border: 'none',
+    width: '100%',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s ease',
+  };
+
+  const overlayStyle = {
+    position: 'fixed',
+    inset: 0,
+    zIndex: 40,
+  };
+
+  const notificationDropdownStyle = {
+    position: 'absolute',
+    right: 0,
+    marginTop: '0.5rem',
+    width: '20rem',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.75rem',
+    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+    border: '1px solid #F1F5F9',
+    zIndex: 50,
+  };
+
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-gray-100">
-      <div className="flex items-center justify-between h-16 px-4 lg:px-6">
+    <header style={headerStyle}>
+      <div style={containerStyle}>
         {/* Left side */}
-        <div className="flex items-center gap-4">
+        <div style={leftSideStyle}>
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 rounded-lg text-text-secondary hover:bg-gray-100 hover:text-text-primary transition-colors"
+            style={menuButtonStyle}
+            className="lg:hidden"
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            <Menu className="w-5 h-5" />
+            <Menu style={{ width: '1.25rem', height: '1.25rem' }} />
           </button>
 
           {title && (
-            <h1 className="text-xl font-semibold text-text-primary hidden sm:block">
+            <h1 style={titleStyle} className="hidden sm:block">
               {title}
             </h1>
           )}
         </div>
 
         {/* Search Bar */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-            <input
-              type="text"
-              placeholder="Search anything..."
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
+        <div style={searchContainerStyle} className="hidden md:flex">
+          <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#64748B' }} />
+          <input
+            type="text"
+            placeholder="Search anything..."
+            style={searchInputStyle}
+          />
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div style={rightSideStyle}>
           {/* Mobile Search */}
-          <button className="md:hidden p-2 rounded-lg text-text-secondary hover:bg-gray-100 hover:text-text-primary transition-colors">
-            <Search className="w-5 h-5" />
+          <button style={iconButtonStyle} className="md:hidden">
+            <Search style={{ width: '1.25rem', height: '1.25rem' }} />
           </button>
 
           {/* Notifications */}
-          <div className="relative">
+          <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 rounded-lg text-text-secondary hover:bg-gray-100 hover:text-text-primary transition-colors"
+              style={iconButtonStyle}
             >
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full" />
+              <Bell style={{ width: '1.25rem', height: '1.25rem' }} />
+              <span style={notificationDotStyle} />
             </button>
 
             {showNotifications && (
               <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowNotifications(false)}
-                />
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50">
-                  <div className="p-4 border-b border-gray-100">
-                    <h3 className="font-semibold text-text-primary">Notifications</h3>
+                <div style={overlayStyle} onClick={() => setShowNotifications(false)} />
+                <div style={notificationDropdownStyle}>
+                  <div style={{ padding: '1rem', borderBottom: '1px solid #F1F5F9' }}>
+                    <h3 style={{ fontWeight: '600', color: '#1E3A5F' }}>Notifications</h3>
                   </div>
-                  <div className="max-h-72 overflow-y-auto">
-                    <div className="p-4 text-center text-text-secondary text-sm">
+                  <div style={{ maxHeight: '18rem', overflow: 'auto' }}>
+                    <div style={{ padding: '1rem', textAlign: 'center', color: '#64748B', fontSize: '0.875rem' }}>
                       No new notifications
                     </div>
                   </div>
@@ -95,64 +241,69 @@ const Header = ({ onMenuClick, title }) => {
           </div>
 
           {/* User Menu */}
-          <div className="relative">
+          <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              style={userButtonStyle}
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <div style={avatarStyle}>
                 {userProfile?.photoURL ? (
                   <img
                     src={userProfile.photoURL}
                     alt="Profile"
-                    className="w-8 h-8 rounded-full object-cover"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <span className="text-white text-sm font-medium">
+                  <span style={{ color: '#FFFFFF', fontSize: '0.875rem', fontWeight: '500' }}>
                     {userProfile?.displayName?.[0]?.toUpperCase() || 'A'}
                   </span>
                 )}
               </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-text-primary">
+              <div className="hidden sm:block" style={{ textAlign: 'left' }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1E3A5F' }}>
                   {userProfile?.displayName || 'Admin'}
                 </p>
-                <p className="text-xs text-text-secondary">
+                <p style={{ fontSize: '0.75rem', color: '#64748B' }}>
                   {userProfile?.role || 'admin'}
                 </p>
               </div>
-              <ChevronDown className="w-4 h-4 text-text-secondary hidden sm:block" />
+              <ChevronDown style={{ width: '1rem', height: '1rem', color: '#64748B' }} className="hidden sm:block" />
             </button>
 
             {showDropdown && (
               <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowDropdown(false)}
-                />
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 z-50 py-1">
+                <div style={overlayStyle} onClick={() => setShowDropdown(false)} />
+                <div style={dropdownStyle}>
                   <Link
                     to="/admin/settings"
                     onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-gray-50"
+                    style={dropdownItemStyle}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
-                    <User className="w-4 h-4" />
+                    <User style={{ width: '1rem', height: '1rem' }} />
                     Profile
                   </Link>
                   <Link
                     to="/admin/settings"
                     onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-gray-50"
+                    style={dropdownItemStyle}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
-                    <Settings className="w-4 h-4" />
+                    <Settings style={{ width: '1rem', height: '1rem' }} />
                     Settings
                   </Link>
-                  <hr className="my-1 border-gray-100" />
+                  <hr style={{ margin: '0.25rem 0', border: 'none', borderTop: '1px solid #F1F5F9' }} />
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-error hover:bg-gray-50 w-full"
+                    style={{ ...dropdownItemStyle, color: '#EF4444' }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut style={{ width: '1rem', height: '1rem' }} />
                     Logout
                   </button>
                 </div>
