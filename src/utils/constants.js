@@ -45,6 +45,12 @@ export const USER_ROLES = {
   USER: 'user',
 };
 
+// Default Admin Emails (these emails will automatically get admin role)
+export const ADMIN_EMAILS = [
+  'admin@ventixe.com',
+  'admin@gmail.com',
+];
+
 // Registration Status
 export const REGISTRATION_STATUS = {
   PENDING: 'pending',

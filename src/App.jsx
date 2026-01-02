@@ -17,6 +17,8 @@ import Events from './pages/public/Events';
 import EventDetails from './pages/public/EventDetails';
 import EventRegister from './pages/public/EventRegister';
 import PaymentSuccess from './pages/public/PaymentSuccess';
+import About from './pages/public/About';
+import Contact from './pages/public/Contact';
 
 // Admin Pages
 import Dashboard from './pages/admin/Dashboard';
@@ -61,6 +63,8 @@ function App() {
             <Route path="/events/:eventId" element={<EventDetails />} />
             <Route path="/events/:eventId/register" element={<EventRegister />} />
             <Route path="/payment/success" element={<PaymentSuccess />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
           </Route>
 
           {/* Admin Routes */}

@@ -76,117 +76,221 @@ const Events = () => {
     setTypeFilter('');
   };
 
+  const containerStyle = {
+    minHeight: '100vh',
+    backgroundColor: '#F5F7FA',
+    padding: '2rem 0',
+  };
+
+  const contentStyle = {
+    maxWidth: '80rem',
+    margin: '0 auto',
+    padding: '0 1rem',
+  };
+
+  const headerStyle = {
+    marginBottom: '2rem',
+  };
+
+  const titleStyle = {
+    fontSize: '1.875rem',
+    fontWeight: 'bold',
+    color: '#1E3A5F',
+  };
+
+  const subtitleStyle = {
+    color: '#64748B',
+    marginTop: '0.25rem',
+  };
+
+  const filterBoxStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.75rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    padding: '1rem',
+    marginBottom: '2rem',
+  };
+
+  const filterRowStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  };
+
+  const searchContainerStyle = {
+    flex: 1,
+    position: 'relative',
+  };
+
+  const searchInputStyle = {
+    width: '100%',
+    padding: '0.625rem 1rem 0.625rem 2.5rem',
+    border: '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    outline: 'none',
+  };
+
+  const viewToggleStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    border: '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    padding: '0.25rem',
+  };
+
+  const viewButtonStyle = (isActive) => ({
+    padding: '0.5rem',
+    borderRadius: '0.25rem',
+    backgroundColor: isActive ? '#1E3A5F' : 'transparent',
+    color: isActive ? '#FFFFFF' : '#6B7280',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  });
+
+  const resultsStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '1.5rem',
+    color: '#64748B',
+  };
+
+  const gridStyle = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+    gap: '1.5rem',
+  };
+
+  const listStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  };
+
+  const emptyStateStyle = {
+    textAlign: 'center',
+    padding: '4rem 0',
+  };
+
+  const loadingCardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.75rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    overflow: 'hidden',
+  };
+
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div style={containerStyle}>
+      <div style={contentStyle}>
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text-primary">All Events</h1>
-          <p className="text-text-secondary mt-1">
-            Browse and register for upcoming events
-          </p>
+        <div style={headerStyle}>
+          <h1 style={titleStyle}>All Events</h1>
+          <p style={subtitleStyle}>Browse and register for upcoming events</p>
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <div style={filterBoxStyle}>
+          <div style={filterRowStyle} className="lg:flex-row">
             {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div style={searchContainerStyle}>
+              <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', color: '#9CA3AF' }} />
               <input
                 type="text"
                 placeholder="Search events..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                style={searchInputStyle}
               />
             </div>
 
-            {/* Category Filter */}
-            <Select
-              options={EVENT_CATEGORIES}
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              placeholder="All Categories"
-              className="w-full lg:w-48"
-            />
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              {/* Category Filter */}
+              <Select
+                options={EVENT_CATEGORIES}
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                placeholder="All Categories"
+              />
 
-            {/* Type Filter */}
-            <Select
-              options={EVENT_TYPES}
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              placeholder="All Types"
-              className="w-full lg:w-40"
-            />
+              {/* Type Filter */}
+              <Select
+                options={EVENT_TYPES}
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                placeholder="All Types"
+              />
 
-            {/* Clear Filters */}
-            {(searchTerm || categoryFilter || typeFilter) && (
-              <Button variant="ghost" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            )}
+              {/* Clear Filters */}
+              {(searchTerm || categoryFilter || typeFilter) && (
+                <Button variant="ghost" onClick={clearFilters}>
+                  Clear Filters
+                </Button>
+              )}
 
-            {/* View Toggle */}
-            <div className="flex items-center gap-1 border border-gray-200 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded ${viewMode === 'grid' ? 'bg-primary text-white' : 'text-gray-500'}`}
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded ${viewMode === 'list' ? 'bg-primary text-white' : 'text-gray-500'}`}
-              >
-                <List className="w-4 h-4" />
-              </button>
+              {/* View Toggle */}
+              <div style={viewToggleStyle}>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  style={viewButtonStyle(viewMode === 'grid')}
+                >
+                  <Grid style={{ width: '1rem', height: '1rem' }} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  style={viewButtonStyle(viewMode === 'list')}
+                >
+                  <List style={{ width: '1rem', height: '1rem' }} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Results Count */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-text-secondary">
-            Showing {filteredEvents.length} of {events.length} events
-          </p>
+        <div style={resultsStyle}>
+          <p>Showing {filteredEvents.length} of {events.length} events</p>
         </div>
 
         {/* Events Grid/List */}
         {loading ? (
-          <div className={`grid ${viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
+          <div style={gridStyle}>
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="bg-white rounded-xl shadow-sm animate-pulse">
-                <div className="h-48 bg-gray-200 rounded-t-xl" />
-                <div className="p-6 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-1/4" />
-                  <div className="h-6 bg-gray-200 rounded w-3/4" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+              <div key={i} style={loadingCardStyle}>
+                <div style={{ height: '12rem', backgroundColor: '#E5E7EB' }} />
+                <div style={{ padding: '1.5rem' }}>
+                  <div style={{ height: '1rem', backgroundColor: '#E5E7EB', borderRadius: '0.25rem', width: '25%', marginBottom: '0.75rem' }} />
+                  <div style={{ height: '1.5rem', backgroundColor: '#E5E7EB', borderRadius: '0.25rem', width: '75%', marginBottom: '0.75rem' }} />
+                  <div style={{ height: '1rem', backgroundColor: '#E5E7EB', borderRadius: '0.25rem', width: '50%' }} />
                 </div>
               </div>
             ))}
           </div>
         ) : filteredEvents.length > 0 ? (
           viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div style={gridStyle}>
               {filteredEvents.map((event) => (
                 <EventGridCard key={event.id} event={event} formatDate={formatDate} />
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
+            <div style={listStyle}>
               {filteredEvents.map((event) => (
                 <EventListCard key={event.id} event={event} formatDate={formatDate} />
               ))}
             </div>
           )
         ) : (
-          <div className="text-center py-16">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-text-primary mb-2">
+          <div style={emptyStateStyle}>
+            <Calendar style={{ width: '4rem', height: '4rem', color: '#D1D5DB', margin: '0 auto 1rem' }} />
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '500', color: '#1E3A5F', marginBottom: '0.5rem' }}>
               No events found
             </h3>
-            <p className="text-text-secondary mb-4">
+            <p style={{ color: '#64748B', marginBottom: '1rem' }}>
               Try adjusting your filters or search term
             </p>
             <Button variant="outline" onClick={clearFilters}>
@@ -201,152 +305,349 @@ const Events = () => {
 
 // Grid Card Component
 const EventGridCard = ({ event, formatDate }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.75rem',
+    overflow: 'hidden',
+    boxShadow: isHovered ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease',
+    transform: isHovered ? 'translateY(-4px)' : 'none',
+    cursor: 'pointer',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const imageContainerStyle = {
+    position: 'relative',
+    height: '12rem',
+    overflow: 'hidden',
+  };
+
+  const imageStyle = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    transition: 'transform 0.3s ease',
+    transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+  };
+
+  const placeholderStyle = {
+    width: '100%',
+    height: '100%',
+    background: 'linear-gradient(135deg, #1E3A5F 0%, #152C4A 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const badgeContainerStyle = {
+    position: 'absolute',
+    top: '0.75rem',
+    left: '0.75rem',
+    display: 'flex',
+    gap: '0.5rem',
+  };
+
+  const categoryBadgeStyle = {
+    padding: '0.25rem 0.75rem',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    color: '#1E3A5F',
+  };
+
+  const typeBadgeStyle = (type) => ({
+    padding: '0.25rem 0.75rem',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    backgroundColor: type === 'online' ? '#DBEAFE' : '#D1FAE5',
+    color: type === 'online' ? '#1D4ED8' : '#059669',
+  });
+
+  const priceBadgeStyle = (isFree) => ({
+    position: 'absolute',
+    bottom: '0.75rem',
+    right: '0.75rem',
+    padding: '0.25rem 0.75rem',
+    borderRadius: '9999px',
+    fontSize: '0.875rem',
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    backgroundColor: isFree ? '#10B981' : '#E91E63',
+  });
+
+  const contentStyle = {
+    padding: '1.5rem',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const titleStyle = {
+    fontSize: '1.125rem',
+    fontWeight: '600',
+    color: isHovered ? '#1E3A5F' : '#1E3A5F',
+    marginBottom: '0.5rem',
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+  };
+
+  const descStyle = {
+    fontSize: '0.875rem',
+    color: '#64748B',
+    marginBottom: '1rem',
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+  };
+
+  const metaContainerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    flex: 1,
+  };
+
+  const metaStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    fontSize: '0.875rem',
+    color: '#64748B',
+  };
+
+  const footerStyle = {
+    marginTop: '1rem',
+    paddingTop: '1rem',
+    borderTop: '1px solid #F1F5F9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  };
+
   return (
-    <Link to={`/events/${event.id}`}>
-      <Card className="overflow-hidden group h-full" hover padding="none">
-        <div className="relative h-48 overflow-hidden">
+    <Link to={`/events/${event.id}`} style={{ textDecoration: 'none' }}>
+      <div
+        style={cardStyle}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div style={imageContainerStyle}>
           {event.bannerUrl ? (
-            <img
-              src={event.bannerUrl}
-              alt={event.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
+            <img src={event.bannerUrl} alt={event.title} style={imageStyle} />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
-              <Calendar className="w-12 h-12 text-white/50" />
+            <div style={placeholderStyle}>
+              <Calendar style={{ width: '3rem', height: '3rem', color: 'rgba(255,255,255,0.5)' }} />
             </div>
           )}
-          <div className="absolute top-3 left-3 flex gap-2">
-            <span className="px-3 py-1 bg-white/90 backdrop-blur-sm rounded-full text-xs font-medium text-primary">
-              {event.category}
-            </span>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-              event.type === 'online'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-green-100 text-green-700'
-            }`}>
-              {event.type}
-            </span>
+          <div style={badgeContainerStyle}>
+            <span style={categoryBadgeStyle}>{event.category}</span>
+            <span style={typeBadgeStyle(event.type)}>{event.type}</span>
           </div>
-          {event.fee > 0 && (
-            <div className="absolute bottom-3 right-3">
-              <span className="px-3 py-1 bg-accent text-white rounded-full text-sm font-bold">
-                ₹{event.fee}
-              </span>
-            </div>
-          )}
-          {event.fee === 0 && (
-            <div className="absolute bottom-3 right-3">
-              <span className="px-3 py-1 bg-success text-white rounded-full text-sm font-bold">
-                FREE
-              </span>
-            </div>
-          )}
+          <span style={priceBadgeStyle(event.fee === 0)}>
+            {event.fee > 0 ? `₹${event.fee}` : 'FREE'}
+          </span>
         </div>
-        <div className="p-6">
-          <h3 className="text-lg font-semibold text-text-primary mb-2 line-clamp-2 group-hover:text-primary transition-colors">
-            {event.title}
-          </h3>
-          <p className="text-sm text-text-secondary mb-4 line-clamp-2">
-            {event.description}
-          </p>
-          <div className="space-y-2 text-sm text-text-secondary">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary" />
+        <div style={contentStyle}>
+          <h3 style={titleStyle}>{event.title}</h3>
+          <p style={descStyle}>{event.description}</p>
+          <div style={metaContainerStyle}>
+            <div style={metaStyle}>
+              <Calendar style={{ width: '1rem', height: '1rem', color: '#1E3A5F' }} />
               {formatDate(event.eventDate)}
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
+            <div style={metaStyle}>
+              <Clock style={{ width: '1rem', height: '1rem', color: '#1E3A5F' }} />
               {event.startTime} - {event.endTime}
             </div>
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" />
+            <div style={metaStyle}>
+              <MapPin style={{ width: '1rem', height: '1rem', color: '#1E3A5F' }} />
               {event.type === 'online' ? 'Online Event' : event.venue || 'TBA'}
             </div>
           </div>
-          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm text-text-secondary">
-              <Users className="w-4 h-4" />
+          <div style={footerStyle}>
+            <div style={metaStyle}>
+              <Users style={{ width: '1rem', height: '1rem' }} />
               {event.currentCount || 0}/{event.maxParticipants}
             </div>
-            <span className="text-primary font-medium text-sm group-hover:underline">
+            <span style={{ color: '#1E3A5F', fontWeight: '500', fontSize: '0.875rem' }}>
               View Details →
             </span>
           </div>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 };
 
 // List Card Component
 const EventListCard = ({ event, formatDate }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.75rem',
+    overflow: 'hidden',
+    boxShadow: isHovered ? '0 10px 25px -5px rgba(0,0,0,0.1)' : '0 1px 3px rgba(0,0,0,0.1)',
+    transition: 'all 0.3s ease',
+    cursor: 'pointer',
+  };
+
+  const innerStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  const imageContainerStyle = {
+    position: 'relative',
+    width: '100%',
+    height: '12rem',
+    overflow: 'hidden',
+    flexShrink: 0,
+  };
+
+  const imageStyle = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    transition: 'transform 0.3s ease',
+    transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+  };
+
+  const placeholderStyle = {
+    width: '100%',
+    height: '100%',
+    background: 'linear-gradient(135deg, #1E3A5F 0%, #152C4A 100%)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  };
+
+  const contentStyle = {
+    flex: 1,
+    padding: '1.5rem',
+  };
+
+  const badgeContainerStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '0.5rem',
+    marginBottom: '0.75rem',
+  };
+
+  const categoryBadgeStyle = {
+    padding: '0.25rem 0.75rem',
+    backgroundColor: '#F1F5F9',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    color: '#1E3A5F',
+  };
+
+  const typeBadgeStyle = (type) => ({
+    padding: '0.25rem 0.75rem',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: '500',
+    backgroundColor: type === 'online' ? '#DBEAFE' : '#D1FAE5',
+    color: type === 'online' ? '#1D4ED8' : '#059669',
+  });
+
+  const priceBadgeStyle = (isFree) => ({
+    padding: '0.25rem 0.75rem',
+    borderRadius: '9999px',
+    fontSize: '0.75rem',
+    fontWeight: 'bold',
+    backgroundColor: isFree ? 'rgba(16, 185, 129, 0.1)' : 'rgba(233, 30, 99, 0.1)',
+    color: isFree ? '#10B981' : '#E91E63',
+  });
+
+  const titleStyle = {
+    fontSize: '1.25rem',
+    fontWeight: '600',
+    color: '#1E3A5F',
+    marginBottom: '0.5rem',
+  };
+
+  const descStyle = {
+    color: '#64748B',
+    marginBottom: '1rem',
+    overflow: 'hidden',
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+  };
+
+  const metaContainerStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '1rem',
+    fontSize: '0.875rem',
+    color: '#64748B',
+  };
+
+  const metaStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  };
+
   return (
-    <Link to={`/events/${event.id}`}>
-      <Card className="overflow-hidden group" hover padding="none">
-        <div className="flex flex-col sm:flex-row">
-          <div className="relative w-full sm:w-64 h-48 sm:h-auto overflow-hidden flex-shrink-0">
+    <Link to={`/events/${event.id}`} style={{ textDecoration: 'none' }}>
+      <div
+        style={cardStyle}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div style={innerStyle} className="sm:flex-row">
+          <div style={imageContainerStyle} className="sm:w-64 sm:h-auto">
             {event.bannerUrl ? (
-              <img
-                src={event.bannerUrl}
-                alt={event.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
+              <img src={event.bannerUrl} alt={event.title} style={imageStyle} />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center">
-                <Calendar className="w-12 h-12 text-white/50" />
+              <div style={placeholderStyle}>
+                <Calendar style={{ width: '3rem', height: '3rem', color: 'rgba(255,255,255,0.5)' }} />
               </div>
             )}
           </div>
-          <div className="flex-1 p-6">
-            <div className="flex flex-wrap gap-2 mb-3">
-              <span className="px-3 py-1 bg-gray-100 rounded-full text-xs font-medium text-primary">
-                {event.category}
+          <div style={contentStyle}>
+            <div style={badgeContainerStyle}>
+              <span style={categoryBadgeStyle}>{event.category}</span>
+              <span style={typeBadgeStyle(event.type)}>{event.type}</span>
+              <span style={priceBadgeStyle(event.fee === 0)}>
+                {event.fee > 0 ? `₹${event.fee}` : 'FREE'}
               </span>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                event.type === 'online'
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'bg-green-100 text-green-700'
-              }`}>
-                {event.type}
-              </span>
-              {event.fee > 0 ? (
-                <span className="px-3 py-1 bg-accent/10 text-accent rounded-full text-xs font-bold">
-                  ₹{event.fee}
-                </span>
-              ) : (
-                <span className="px-3 py-1 bg-success/10 text-success rounded-full text-xs font-bold">
-                  FREE
-                </span>
-              )}
             </div>
-            <h3 className="text-xl font-semibold text-text-primary mb-2 group-hover:text-primary transition-colors">
-              {event.title}
-            </h3>
-            <p className="text-text-secondary mb-4 line-clamp-2">
-              {event.description}
-            </p>
-            <div className="flex flex-wrap gap-4 text-sm text-text-secondary">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
+            <h3 style={titleStyle}>{event.title}</h3>
+            <p style={descStyle}>{event.description}</p>
+            <div style={metaContainerStyle}>
+              <div style={metaStyle}>
+                <Calendar style={{ width: '1rem', height: '1rem', color: '#1E3A5F' }} />
                 {formatDate(event.eventDate)}
               </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary" />
+              <div style={metaStyle}>
+                <Clock style={{ width: '1rem', height: '1rem', color: '#1E3A5F' }} />
                 {event.startTime} - {event.endTime}
               </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
+              <div style={metaStyle}>
+                <MapPin style={{ width: '1rem', height: '1rem', color: '#1E3A5F' }} />
                 {event.type === 'online' ? 'Online Event' : event.venue || 'TBA'}
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-primary" />
+              <div style={metaStyle}>
+                <Users style={{ width: '1rem', height: '1rem', color: '#1E3A5F' }} />
                 {event.currentCount || 0}/{event.maxParticipants} registered
               </div>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
     </Link>
   );
 };

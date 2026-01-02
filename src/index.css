@@ -199,35 +199,6 @@ body {
   border-color: #E91E63;
 }
 
-@utility hover\:bg-primary-dark {
-  &:hover {
-    background-color: #152C4A;
-  }
-}
-
-@utility hover\:bg-accent-dark {
-  &:hover {
-    background-color: #C2185B;
-  }
-}
-
-@utility hover\:text-primary {
-  &:hover {
-    color: #1E3A5F;
-  }
-}
-
-@utility focus\:ring-primary {
-  &:focus {
-    --tw-ring-color: rgba(30, 58, 95, 0.5);
-  }
-}
-
-@utility focus\:border-primary {
-  &:focus {
-    border-color: #1E3A5F;
-  }
-}
 
 /* Card hover effect */
 .card-hover {

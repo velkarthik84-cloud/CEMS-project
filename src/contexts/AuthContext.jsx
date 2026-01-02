@@ -10,7 +10,12 @@ import {
   onAuthStateChanged
 } from '../services/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { USER_ROLES } from '../utils/constants';
+import { USER_ROLES, ADMIN_EMAILS } from '../utils/constants';
+
+// Check if email should be admin
+const isAdminEmail = (email) => {
+  return ADMIN_EMAILS.includes(email?.toLowerCase());
+};
 
 const AuthContext = createContext(null);
 
@@ -36,15 +41,23 @@ export const AuthProvider = ({ children }) => {
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-      return { id: userSnap.id, ...userSnap.data() };
+      const existingProfile = { id: userSnap.id, ...userSnap.data() };
+
+      // Auto-upgrade to admin if email is in admin list
+      if (isAdminEmail(firebaseUser.email) && existingProfile.role !== USER_ROLES.ADMIN) {
+        await setDoc(userRef, { role: USER_ROLES.ADMIN, updatedAt: serverTimestamp() }, { merge: true });
+        existingProfile.role = USER_ROLES.ADMIN;
+      }
+
+      return existingProfile;
     }
 
-    // Create new user profile
+    // Create new user profile - auto-assign admin role if email matches
     const newProfile = {
       email: firebaseUser.email,
       displayName: firebaseUser.displayName || '',
       photoURL: firebaseUser.photoURL || '',
-      role: USER_ROLES.USER,
+      role: isAdminEmail(firebaseUser.email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -83,13 +96,13 @@ export const AuthProvider = ({ children }) => {
     try {
       const firebaseUser = await registerUser(email, password, displayName);
 
-      // Create user profile in Firestore
+      // Create user profile in Firestore - auto-assign admin role if email matches
       const userRef = doc(db, 'users', firebaseUser.uid);
       const newProfile = {
         email: firebaseUser.email,
         displayName: displayName,
         photoURL: '',
-        role: USER_ROLES.USER,
+        role: isAdminEmail(email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
