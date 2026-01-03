@@ -21,7 +21,9 @@ import {
   Plus,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  Award,
+  FileText
 } from 'lucide-react';
 import { EventQRModal } from '../../components/common';
 import { EVENT_CATEGORIES, EVENT_TYPES } from '../../utils/constants';
@@ -57,6 +59,59 @@ const CreateEvent = () => {
   const [judges, setJudges] = useState([]);
   const [showPassword, setShowPassword] = useState({});
 
+  // Category-specific fields state
+  const [categoryFields, setCategoryFields] = useState({
+    // Workshop fields
+    instructorName: '',
+    instructorProfile: '',
+    workshopDuration: '',
+    prerequisites: '',
+    materials: '',
+    workshopCertificate: false,
+    // Seminar fields
+    speakerName: '',
+    speakerDesignation: '',
+    seminarTopic: '',
+    sessionDuration: '',
+    hasQnA: false,
+    // Exam fields
+    examType: '',
+    totalMarks: '',
+    passingMarks: '',
+    examDuration: '',
+    examPattern: '',
+    resultDate: '',
+    examCertificate: false,
+    // Cultural fields
+    culturalType: '',
+    performanceType: '',
+    teamSize: '',
+    songDetails: '',
+    propsRequired: '',
+    // Training fields
+    trainerName: '',
+    trainingMode: '',
+    trainingDuration: '',
+    timeSlot: '',
+    syllabus: '',
+    attendanceRequired: false,
+    trainingCertificate: false,
+    // Conference fields
+    chiefGuests: '',
+    speakers: '',
+    agenda: '',
+    sponsorship: '',
+    networkingSession: false,
+    refreshments: false,
+    // Webinar fields
+    hostName: '',
+    platform: '',
+    webinarLink: '',
+    webinarDuration: '',
+    recordingAvailable: false,
+    sendReminders: false,
+  });
+
   const {
     register,
     handleSubmit,
@@ -71,6 +126,12 @@ const CreateEvent = () => {
   });
 
   const watchType = watch('type');
+  const watchCategory = watch('category');
+
+  // Update category field
+  const updateCategoryField = (field, value) => {
+    setCategoryFields(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -133,6 +194,77 @@ const CreateEvent = () => {
       // Validate judges
       const validJudges = judges.filter(j => j.name && j.username && j.password);
 
+      // Get category-specific data based on selected category
+      const getCategorySpecificData = () => {
+        switch (data.category) {
+          case 'workshop':
+            return {
+              instructorName: categoryFields.instructorName,
+              instructorProfile: categoryFields.instructorProfile,
+              workshopDuration: categoryFields.workshopDuration,
+              prerequisites: categoryFields.prerequisites,
+              materials: categoryFields.materials,
+              workshopCertificate: categoryFields.workshopCertificate,
+            };
+          case 'seminar':
+            return {
+              speakerName: categoryFields.speakerName,
+              speakerDesignation: categoryFields.speakerDesignation,
+              seminarTopic: categoryFields.seminarTopic,
+              sessionDuration: categoryFields.sessionDuration,
+              hasQnA: categoryFields.hasQnA,
+            };
+          case 'exam':
+            return {
+              examType: categoryFields.examType,
+              totalMarks: parseInt(categoryFields.totalMarks) || 0,
+              passingMarks: parseInt(categoryFields.passingMarks) || 0,
+              examDuration: categoryFields.examDuration,
+              examPattern: categoryFields.examPattern,
+              resultDate: categoryFields.resultDate ? new Date(categoryFields.resultDate) : null,
+              examCertificate: categoryFields.examCertificate,
+            };
+          case 'cultural':
+            return {
+              culturalType: categoryFields.culturalType,
+              performanceType: categoryFields.performanceType,
+              teamSize: parseInt(categoryFields.teamSize) || 1,
+              songDetails: categoryFields.songDetails,
+              propsRequired: categoryFields.propsRequired,
+            };
+          case 'training':
+            return {
+              trainerName: categoryFields.trainerName,
+              trainingMode: categoryFields.trainingMode,
+              trainingDuration: categoryFields.trainingDuration,
+              timeSlot: categoryFields.timeSlot,
+              syllabus: categoryFields.syllabus,
+              attendanceRequired: categoryFields.attendanceRequired,
+              trainingCertificate: categoryFields.trainingCertificate,
+            };
+          case 'conference':
+            return {
+              chiefGuests: categoryFields.chiefGuests,
+              speakers: categoryFields.speakers,
+              agenda: categoryFields.agenda,
+              sponsorship: categoryFields.sponsorship,
+              networkingSession: categoryFields.networkingSession,
+              refreshments: categoryFields.refreshments,
+            };
+          case 'webinar':
+            return {
+              hostName: categoryFields.hostName,
+              platform: categoryFields.platform,
+              webinarLink: categoryFields.webinarLink,
+              webinarDuration: categoryFields.webinarDuration,
+              recordingAvailable: categoryFields.recordingAvailable,
+              sendReminders: categoryFields.sendReminders,
+            };
+          default:
+            return {};
+        }
+      };
+
       const eventData = {
         title: data.title,
         description: data.description,
@@ -158,6 +290,7 @@ const CreateEvent = () => {
           password: j.password,
           email: j.email || '',
         })),
+        categoryDetails: getCategorySpecificData(),
         status: 'draft',
         createdBy: user.uid,
         createdAt: serverTimestamp(),
@@ -402,6 +535,588 @@ const CreateEvent = () => {
             </div>
           )}
         </div>
+
+        {/* Category-Specific Fields */}
+        {watchCategory === 'workshop' && (
+          <div style={cardStyle}>
+            <h2 style={sectionTitleStyle}>
+              <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Workshop Details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Instructor Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter instructor name"
+                    style={inputStyle}
+                    value={categoryFields.instructorName}
+                    onChange={(e) => updateCategoryField('instructorName', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Workshop Duration</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 2 hours, Half day"
+                    style={inputStyle}
+                    value={categoryFields.workshopDuration}
+                    onChange={(e) => updateCategoryField('workshopDuration', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Instructor Profile</label>
+                <textarea
+                  placeholder="Brief bio or credentials of the instructor..."
+                  style={{ ...textareaStyle, minHeight: '80px' }}
+                  value={categoryFields.instructorProfile}
+                  onChange={(e) => updateCategoryField('instructorProfile', e.target.value)}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Prerequisites</label>
+                <textarea
+                  placeholder="Any prerequisites or requirements for participants..."
+                  style={{ ...textareaStyle, minHeight: '60px' }}
+                  value={categoryFields.prerequisites}
+                  onChange={(e) => updateCategoryField('prerequisites', e.target.value)}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Materials Provided</label>
+                <input
+                  type="text"
+                  placeholder="e.g., Laptop, Notes, Toolkit"
+                  style={inputStyle}
+                  value={categoryFields.materials}
+                  onChange={(e) => updateCategoryField('materials', e.target.value)}
+                />
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Certificate of Completion</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Provide certificate after workshop completion
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.workshopCertificate)}
+                  onClick={() => updateCategoryField('workshopCertificate', !categoryFields.workshopCertificate)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.workshopCertificate)} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {watchCategory === 'seminar' && (
+          <div style={cardStyle}>
+            <h2 style={sectionTitleStyle}>
+              <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Seminar Details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Speaker Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter speaker name"
+                    style={inputStyle}
+                    value={categoryFields.speakerName}
+                    onChange={(e) => updateCategoryField('speakerName', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Speaker Designation</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., CEO, Professor, Expert"
+                    style={inputStyle}
+                    value={categoryFields.speakerDesignation}
+                    onChange={(e) => updateCategoryField('speakerDesignation', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Seminar Topic</label>
+                  <input
+                    type="text"
+                    placeholder="Main topic of the seminar"
+                    style={inputStyle}
+                    value={categoryFields.seminarTopic}
+                    onChange={(e) => updateCategoryField('seminarTopic', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Session Duration</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 1 hour, 90 minutes"
+                    style={inputStyle}
+                    value={categoryFields.sessionDuration}
+                    onChange={(e) => updateCategoryField('sessionDuration', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Q&A Session</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Include a Q&A session at the end
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.hasQnA)}
+                  onClick={() => updateCategoryField('hasQnA', !categoryFields.hasQnA)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.hasQnA)} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {watchCategory === 'exam' && (
+          <div style={cardStyle}>
+            <h2 style={sectionTitleStyle}>
+              <FileText style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Exam Details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Exam Type *</label>
+                  <select
+                    style={selectStyle}
+                    value={categoryFields.examType}
+                    onChange={(e) => updateCategoryField('examType', e.target.value)}
+                  >
+                    <option value="">Select Exam Type</option>
+                    <option value="mcq">MCQ (Multiple Choice)</option>
+                    <option value="written">Written</option>
+                    <option value="practical">Practical</option>
+                    <option value="viva">Viva/Oral</option>
+                    <option value="mixed">Mixed</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Exam Duration</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 2 hours, 90 minutes"
+                    style={inputStyle}
+                    value={categoryFields.examDuration}
+                    onChange={(e) => updateCategoryField('examDuration', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Total Marks</label>
+                  <input
+                    type="number"
+                    placeholder="100"
+                    style={inputStyle}
+                    value={categoryFields.totalMarks}
+                    onChange={(e) => updateCategoryField('totalMarks', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Passing Marks</label>
+                  <input
+                    type="number"
+                    placeholder="40"
+                    style={inputStyle}
+                    value={categoryFields.passingMarks}
+                    onChange={(e) => updateCategoryField('passingMarks', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Result Date</label>
+                  <input
+                    type="date"
+                    style={inputStyle}
+                    value={categoryFields.resultDate}
+                    onChange={(e) => updateCategoryField('resultDate', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Exam Pattern / Instructions</label>
+                <textarea
+                  placeholder="Describe the exam pattern, sections, marking scheme..."
+                  style={{ ...textareaStyle, minHeight: '80px' }}
+                  value={categoryFields.examPattern}
+                  onChange={(e) => updateCategoryField('examPattern', e.target.value)}
+                />
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Certificate for Qualified</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Provide certificate for participants who pass
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.examCertificate)}
+                  onClick={() => updateCategoryField('examCertificate', !categoryFields.examCertificate)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.examCertificate)} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {watchCategory === 'cultural' && (
+          <div style={cardStyle}>
+            <h2 style={sectionTitleStyle}>
+              <Award style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Cultural Event Details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Cultural Type *</label>
+                  <select
+                    style={selectStyle}
+                    value={categoryFields.culturalType}
+                    onChange={(e) => updateCategoryField('culturalType', e.target.value)}
+                  >
+                    <option value="">Select Type</option>
+                    <option value="dance">Dance</option>
+                    <option value="music">Music</option>
+                    <option value="drama">Drama/Theatre</option>
+                    <option value="singing">Singing</option>
+                    <option value="art">Art/Painting</option>
+                    <option value="fashion">Fashion Show</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Performance Type *</label>
+                  <select
+                    style={selectStyle}
+                    value={categoryFields.performanceType}
+                    onChange={(e) => updateCategoryField('performanceType', e.target.value)}
+                  >
+                    <option value="">Select Performance Type</option>
+                    <option value="solo">Solo</option>
+                    <option value="duo">Duo</option>
+                    <option value="group">Group</option>
+                  </select>
+                </div>
+              </div>
+              {categoryFields.performanceType === 'group' && (
+                <div>
+                  <label style={labelStyle}>Team Size (Max Members)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 5, 10"
+                    style={inputStyle}
+                    value={categoryFields.teamSize}
+                    onChange={(e) => updateCategoryField('teamSize', e.target.value)}
+                  />
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>Song / Music Details</label>
+                <input
+                  type="text"
+                  placeholder="Song name, artist, genre (if applicable)"
+                  style={inputStyle}
+                  value={categoryFields.songDetails}
+                  onChange={(e) => updateCategoryField('songDetails', e.target.value)}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Props Required</label>
+                <textarea
+                  placeholder="List any props or equipment needed for the performance..."
+                  style={{ ...textareaStyle, minHeight: '60px' }}
+                  value={categoryFields.propsRequired}
+                  onChange={(e) => updateCategoryField('propsRequired', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {watchCategory === 'training' && (
+          <div style={cardStyle}>
+            <h2 style={sectionTitleStyle}>
+              <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Training Details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Trainer Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter trainer name"
+                    style={inputStyle}
+                    value={categoryFields.trainerName}
+                    onChange={(e) => updateCategoryField('trainerName', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Training Mode</label>
+                  <select
+                    style={selectStyle}
+                    value={categoryFields.trainingMode}
+                    onChange={(e) => updateCategoryField('trainingMode', e.target.value)}
+                  >
+                    <option value="">Select Mode</option>
+                    <option value="classroom">Classroom</option>
+                    <option value="hands-on">Hands-on / Practical</option>
+                    <option value="online-live">Online Live</option>
+                    <option value="self-paced">Self-paced</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Training Duration</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 3 days, 1 week, 40 hours"
+                    style={inputStyle}
+                    value={categoryFields.trainingDuration}
+                    onChange={(e) => updateCategoryField('trainingDuration', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Time Slot</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 10 AM - 1 PM, Full day"
+                    style={inputStyle}
+                    value={categoryFields.timeSlot}
+                    onChange={(e) => updateCategoryField('timeSlot', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Syllabus / Topics Covered</label>
+                <textarea
+                  placeholder="List the topics or modules that will be covered..."
+                  style={{ ...textareaStyle, minHeight: '100px' }}
+                  value={categoryFields.syllabus}
+                  onChange={(e) => updateCategoryField('syllabus', e.target.value)}
+                />
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Attendance Required</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Minimum attendance required for certification
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.attendanceRequired)}
+                  onClick={() => updateCategoryField('attendanceRequired', !categoryFields.attendanceRequired)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.attendanceRequired)} />
+                </button>
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Training Certificate</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Provide certificate after training completion
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.trainingCertificate)}
+                  onClick={() => updateCategoryField('trainingCertificate', !categoryFields.trainingCertificate)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.trainingCertificate)} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {watchCategory === 'conference' && (
+          <div style={cardStyle}>
+            <h2 style={sectionTitleStyle}>
+              <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Conference Details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={labelStyle}>Chief Guest(s)</label>
+                <textarea
+                  placeholder="Names and designations of chief guests..."
+                  style={{ ...textareaStyle, minHeight: '60px' }}
+                  value={categoryFields.chiefGuests}
+                  onChange={(e) => updateCategoryField('chiefGuests', e.target.value)}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Speakers</label>
+                <textarea
+                  placeholder="List of speakers with their topics..."
+                  style={{ ...textareaStyle, minHeight: '80px' }}
+                  value={categoryFields.speakers}
+                  onChange={(e) => updateCategoryField('speakers', e.target.value)}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Agenda</label>
+                <textarea
+                  placeholder="Conference agenda with timings..."
+                  style={{ ...textareaStyle, minHeight: '100px' }}
+                  value={categoryFields.agenda}
+                  onChange={(e) => updateCategoryField('agenda', e.target.value)}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Sponsorship Details</label>
+                <input
+                  type="text"
+                  placeholder="Sponsors or sponsorship tiers"
+                  style={inputStyle}
+                  value={categoryFields.sponsorship}
+                  onChange={(e) => updateCategoryField('sponsorship', e.target.value)}
+                />
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Networking Session</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Include networking opportunities for attendees
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.networkingSession)}
+                  onClick={() => updateCategoryField('networkingSession', !categoryFields.networkingSession)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.networkingSession)} />
+                </button>
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Refreshments</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Snacks, lunch, or beverages included
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.refreshments)}
+                  onClick={() => updateCategoryField('refreshments', !categoryFields.refreshments)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.refreshments)} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {watchCategory === 'webinar' && (
+          <div style={cardStyle}>
+            <h2 style={sectionTitleStyle}>
+              <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Webinar Details
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Host Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Enter host/presenter name"
+                    style={inputStyle}
+                    value={categoryFields.hostName}
+                    onChange={(e) => updateCategoryField('hostName', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Platform</label>
+                  <select
+                    style={selectStyle}
+                    value={categoryFields.platform}
+                    onChange={(e) => updateCategoryField('platform', e.target.value)}
+                  >
+                    <option value="">Select Platform</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="google-meet">Google Meet</option>
+                    <option value="teams">Microsoft Teams</option>
+                    <option value="webex">Cisco Webex</option>
+                    <option value="youtube-live">YouTube Live</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                <div>
+                  <label style={labelStyle}>Webinar Link</label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    style={inputStyle}
+                    value={categoryFields.webinarLink}
+                    onChange={(e) => updateCategoryField('webinarLink', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Duration</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 1 hour, 90 minutes"
+                    style={inputStyle}
+                    value={categoryFields.webinarDuration}
+                    onChange={(e) => updateCategoryField('webinarDuration', e.target.value)}
+                  />
+                </div>
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Recording Available</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Make recording available after the webinar
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.recordingAvailable)}
+                  onClick={() => updateCategoryField('recordingAvailable', !categoryFields.recordingAvailable)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.recordingAvailable)} />
+                </button>
+              </div>
+              <div style={toggleBoxStyle}>
+                <div>
+                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Send Reminders</p>
+                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
+                    Send email reminders before the webinar
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  style={toggleBtnStyle(categoryFields.sendReminders)}
+                  onClick={() => updateCategoryField('sendReminders', !categoryFields.sendReminders)}
+                >
+                  <span style={toggleKnobStyle(categoryFields.sendReminders)} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Schedule */}
         <div style={cardStyle}>

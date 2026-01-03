@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { UserCheck, Eye, EyeOff, LogIn } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -29,7 +29,7 @@ const JudgeLogin = () => {
       const snapshot = await getDocs(eventsRef);
 
       let foundJudge = null;
-      let foundEvent = null;
+      const assignedEvents = [];
       const inputValue = formData.usernameOrEmail.toLowerCase().trim();
 
       for (const doc of snapshot.docs) {
@@ -43,19 +43,31 @@ const JudgeLogin = () => {
         );
 
         if (judge) {
-          foundJudge = judge;
-          foundEvent = event;
-          break;
+          if (!foundJudge) {
+            foundJudge = judge;
+          }
+          // Collect all events where this judge is assigned
+          assignedEvents.push({
+            id: event.id,
+            title: event.title,
+            category: event.category,
+            eventDate: event.eventDate,
+            venue: event.venue,
+            type: event.type,
+            bannerUrl: event.bannerUrl,
+            status: event.status,
+            scoringCriteria: event.categoryDetails?.scoringCriteria || null,
+          });
         }
       }
 
-      if (foundJudge && foundEvent) {
-        // Store judge session
+      if (foundJudge && assignedEvents.length > 0) {
+        // Store judge session with all assigned events
         sessionStorage.setItem('judgeSession', JSON.stringify({
           judgeId: foundJudge.id,
           judgeName: foundJudge.name,
-          eventId: foundEvent.id,
-          eventTitle: foundEvent.title,
+          judgeEmail: foundJudge.email || '',
+          assignedEvents: assignedEvents,
         }));
 
         toast.success(`Welcome, ${foundJudge.name}!`);
