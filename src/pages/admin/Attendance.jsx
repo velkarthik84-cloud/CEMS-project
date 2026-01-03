@@ -5,8 +5,8 @@ import {
   CheckCircle,
   XCircle,
   Users,
-  Search,
-  RefreshCw
+  RefreshCw,
+  ChevronDown
 } from 'lucide-react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
@@ -19,7 +19,6 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Button, Card, Select } from '../../components/common';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -106,7 +105,6 @@ const Attendance = () => {
 
   const onScanSuccess = async (decodedText) => {
     try {
-      // Parse QR code: VENTIXE:eventId:registrationId
       const parts = decodedText.split(':');
       if (parts[0] !== 'VENTIXE') {
         toast.error('Invalid QR code');
@@ -120,7 +118,6 @@ const Attendance = () => {
         return;
       }
 
-      // Find registration
       const registration = registrations.find(
         r => r.registrationId === registrationId || r.id === registrationId
       );
@@ -141,13 +138,11 @@ const Attendance = () => {
         return;
       }
 
-      // Mark as checked in
       await updateDoc(doc(db, 'registrations', registration.id), {
         attendanceStatus: 'checked_in',
         checkedInAt: serverTimestamp(),
       });
 
-      // Update local state
       const updatedReg = { ...registration, attendanceStatus: 'checked_in', checkedInAt: new Date() };
       setRegistrations(registrations.map(r =>
         r.id === registration.id ? updatedReg : r
@@ -161,7 +156,6 @@ const Attendance = () => {
         participant: updatedReg
       });
 
-      // Play success sound
       const audio = new Audio('/success.mp3');
       audio.play().catch(() => {});
 
@@ -172,9 +166,7 @@ const Attendance = () => {
     }
   };
 
-  const onScanError = (error) => {
-    // Ignore permission errors during scanning
-  };
+  const onScanError = () => {};
 
   const manualCheckIn = async (registration) => {
     try {
@@ -202,111 +194,200 @@ const Attendance = () => {
     return format(date, 'HH:mm');
   };
 
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.875rem',
+    padding: '1.25rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  };
+
+  const statCardStyle = {
+    ...cardStyle,
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.875rem',
+  };
+
+  const selectStyle = {
+    padding: '0.625rem 2rem 0.625rem 1rem',
+    backgroundColor: '#F8FAFC',
+    border: '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    color: '#1E293B',
+    outline: 'none',
+    appearance: 'none',
+    cursor: 'pointer',
+    minWidth: '200px',
+  };
+
+  const buttonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.625rem 1rem',
+    backgroundColor: '#E91E63',
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+  };
+
+  const outlineButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#FFFFFF',
+    color: '#64748B',
+    border: '1px solid #E2E8F0',
+  };
+
   return (
-    <div className="space-y-6" style={{ width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Attendance</h1>
-          <p className="text-text-secondary">Scan QR codes to mark attendance</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>Attendance</h1>
+          <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem' }}>
+            Scan QR codes to mark attendance
+          </p>
         </div>
-        <Select
-          options={events}
-          value={selectedEvent}
-          onChange={(e) => {
-            setSelectedEvent(e.target.value);
-            if (scanning) stopScanner();
-          }}
-          placeholder="Select Event"
-          className="w-full sm:w-64"
-        />
+        <div style={{ position: 'relative' }}>
+          <select
+            value={selectedEvent}
+            onChange={(e) => {
+              setSelectedEvent(e.target.value);
+              if (scanning) stopScanner();
+            }}
+            style={selectStyle}
+          >
+            <option value="">Select Event</option>
+            {events.map(event => (
+              <option key={event.value} value={event.value}>{event.label}</option>
+            ))}
+          </select>
+          <ChevronDown style={{
+            position: 'absolute',
+            right: '0.75rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '1rem',
+            height: '1rem',
+            color: '#94A3B8',
+            pointerEvents: 'none',
+          }} />
+        </div>
       </div>
 
       {selectedEvent ? (
         <>
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <Card padding="sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-text-primary">
-                    {registrations.length}
-                  </p>
-                  <p className="text-sm text-text-secondary">Total Registered</p>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3" style={{ gap: '1.25rem' }}>
+            <div style={statCardStyle}>
+              <div style={{
+                width: '2.75rem',
+                height: '2.75rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Users style={{ width: '1.25rem', height: '1.25rem', color: '#8B5CF6' }} />
               </div>
-            </Card>
-            <Card padding="sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-success/10 rounded-lg">
-                  <CheckCircle className="w-5 h-5 text-success" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-text-primary">
-                    {checkedIn.length}
-                  </p>
-                  <p className="text-sm text-text-secondary">Checked In</p>
-                </div>
+              <div>
+                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                  {registrations.length}
+                </p>
+                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Total Registered</p>
               </div>
-            </Card>
-            <Card padding="sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-warning/10 rounded-lg">
-                  <XCircle className="w-5 h-5 text-warning" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-text-primary">
-                    {registrations.length - checkedIn.length}
-                  </p>
-                  <p className="text-sm text-text-secondary">Pending</p>
-                </div>
+            </div>
+
+            <div style={statCardStyle}>
+              <div style={{
+                width: '2.75rem',
+                height: '2.75rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: '#10B981' }} />
               </div>
-            </Card>
+              <div>
+                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                  {checkedIn.length}
+                </p>
+                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Checked In</p>
+              </div>
+            </div>
+
+            <div style={statCardStyle}>
+              <div style={{
+                width: '2.75rem',
+                height: '2.75rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <XCircle style={{ width: '1.25rem', height: '1.25rem', color: '#F59E0B' }} />
+              </div>
+              <div>
+                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                  {registrations.length - checkedIn.length}
+                </p>
+                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Pending</p>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: '1.5rem' }}>
             {/* Scanner */}
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-text-primary">QR Scanner</h2>
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>QR Scanner</h2>
                 {scanning ? (
-                  <Button variant="outline" size="sm" onClick={stopScanner}>
+                  <button onClick={stopScanner} style={outlineButtonStyle}>
                     Stop Scanner
-                  </Button>
+                  </button>
                 ) : (
-                  <Button size="sm" icon={Camera} onClick={startScanner}>
+                  <button onClick={startScanner} style={buttonStyle}>
+                    <Camera style={{ width: '1rem', height: '1rem' }} />
                     Start Scanner
-                  </Button>
+                  </button>
                 )}
               </div>
 
               {scanning ? (
-                <div className="space-y-4">
-                  <div id="qr-reader" className="w-full rounded-lg overflow-hidden" />
+                <div>
+                  <div id="qr-reader" style={{ width: '100%', borderRadius: '0.5rem', overflow: 'hidden' }} />
 
                   {lastScanned && (
-                    <div className={`p-4 rounded-lg ${
-                      lastScanned.success
-                        ? 'bg-success-light'
-                        : 'bg-error-light'
-                    }`}>
-                      <div className="flex items-center gap-3">
+                    <div style={{
+                      marginTop: '1rem',
+                      padding: '1rem',
+                      borderRadius: '0.5rem',
+                      backgroundColor: lastScanned.success ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         {lastScanned.success ? (
-                          <CheckCircle className="w-6 h-6 text-success" />
+                          <CheckCircle style={{ width: '1.5rem', height: '1.5rem', color: '#10B981' }} />
                         ) : (
-                          <XCircle className="w-6 h-6 text-error" />
+                          <XCircle style={{ width: '1.5rem', height: '1.5rem', color: '#EF4444' }} />
                         )}
                         <div>
-                          <p className={`font-medium ${
-                            lastScanned.success ? 'text-green-700' : 'text-red-700'
-                          }`}>
+                          <p style={{
+                            fontWeight: '500',
+                            color: lastScanned.success ? '#059669' : '#DC2626',
+                            margin: 0,
+                          }}>
                             {lastScanned.message}
                           </p>
                           {lastScanned.participant && (
-                            <p className="text-sm">
+                            <p style={{ fontSize: '0.875rem', color: '#64748B', margin: '0.25rem 0 0' }}>
                               {lastScanned.participant.fullName}
                             </p>
                           )}
@@ -316,37 +397,43 @@ const Attendance = () => {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <QrCode className="w-10 h-10 text-gray-400" />
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '3rem', textAlign: 'center' }}>
+                  <div style={{
+                    width: '5rem',
+                    height: '5rem',
+                    backgroundColor: '#F1F5F9',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '1rem',
+                  }}>
+                    <QrCode style={{ width: '2.5rem', height: '2.5rem', color: '#94A3B8' }} />
                   </div>
-                  <p className="text-text-secondary mb-4">
+                  <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '1rem' }}>
                     Click "Start Scanner" to scan participant QR codes
                   </p>
-                  <Button icon={Camera} onClick={startScanner}>
+                  <button onClick={startScanner} style={buttonStyle}>
+                    <Camera style={{ width: '1rem', height: '1rem' }} />
                     Start Scanner
-                  </Button>
+                  </button>
                 </div>
               )}
-            </Card>
+            </div>
 
             {/* Recent Check-ins */}
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-text-primary">
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>
                   Recent Check-ins
                 </h2>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={RefreshCw}
-                  onClick={fetchRegistrations}
-                >
+                <button onClick={fetchRegistrations} style={outlineButtonStyle}>
+                  <RefreshCw style={{ width: '0.875rem', height: '0.875rem' }} />
                   Refresh
-                </Button>
+                </button>
               </div>
 
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto' }}>
                 {checkedIn.length > 0 ? (
                   checkedIn
                     .sort((a, b) => (b.checkedInAt?.toDate?.() || 0) - (a.checkedInAt?.toDate?.() || 0))
@@ -354,102 +441,122 @@ const Attendance = () => {
                     .map((reg) => (
                       <div
                         key={reg.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.875rem',
+                          backgroundColor: '#F8FAFC',
+                          borderRadius: '0.5rem',
+                        }}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center">
-                            <CheckCircle className="w-5 h-5 text-success" />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{
+                            width: '2.5rem',
+                            height: '2.5rem',
+                            borderRadius: '50%',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: '#10B981' }} />
                           </div>
                           <div>
-                            <p className="font-medium text-text-primary">
+                            <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1E293B', margin: 0 }}>
                               {reg.fullName}
                             </p>
-                            <p className="text-sm text-text-secondary">
+                            <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
                               {reg.email}
                             </p>
                           </div>
                         </div>
-                        <span className="text-sm text-text-secondary">
+                        <span style={{ fontSize: '0.8125rem', color: '#64748B' }}>
                           {formatTime(reg.checkedInAt)}
                         </span>
                       </div>
                     ))
                 ) : (
-                  <p className="text-center text-text-secondary py-8">
+                  <p style={{ textAlign: 'center', color: '#64748B', padding: '2rem' }}>
                     No check-ins yet
                   </p>
                 )}
               </div>
-            </Card>
+            </div>
           </div>
 
           {/* All Participants */}
-          <Card>
-            <h2 className="text-lg font-semibold text-text-primary mb-4">
-              All Participants
-            </h2>
-            <div className="overflow-x-auto">
-              <table className="w-full">
+          <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '1.25rem', borderBottom: '1px solid #F1F5F9' }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>
+                All Participants
+              </h2>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr className="text-left text-xs font-medium text-text-secondary uppercase">
-                    <th className="pb-3">Participant</th>
-                    <th className="pb-3">Contact</th>
-                    <th className="pb-3">Status</th>
-                    <th className="pb-3">Check-in Time</th>
-                    <th className="pb-3"></th>
+                  <tr style={{ backgroundColor: '#F8FAFC' }}>
+                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Participant</th>
+                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Contact</th>
+                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Status</th>
+                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Check-in Time</th>
+                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {registrations.map((reg) => (
-                    <tr key={reg.id}>
-                      <td className="py-3">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                            reg.attendanceStatus === 'checked_in'
-                              ? 'bg-success/10'
-                              : 'bg-gray-100'
-                          }`}>
-                            <span className={`text-sm font-medium ${
-                              reg.attendanceStatus === 'checked_in'
-                                ? 'text-success'
-                                : 'text-gray-500'
-                            }`}>
+                <tbody>
+                  {registrations.map((reg, index) => (
+                    <tr key={reg.id} style={{ borderBottom: index < registrations.length - 1 ? '1px solid #F1F5F9' : 'none' }}>
+                      <td style={{ padding: '1rem 1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{
+                            width: '2rem',
+                            height: '2rem',
+                            borderRadius: '50%',
+                            backgroundColor: reg.attendanceStatus === 'checked_in' ? 'rgba(16, 185, 129, 0.1)' : '#F1F5F9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            <span style={{
+                              fontSize: '0.8125rem',
+                              fontWeight: '500',
+                              color: reg.attendanceStatus === 'checked_in' ? '#10B981' : '#94A3B8',
+                            }}>
                               {reg.fullName?.[0]?.toUpperCase()}
                             </span>
                           </div>
-                          <span className="font-medium text-text-primary">
+                          <span style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1E293B' }}>
                             {reg.fullName}
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 text-sm text-text-secondary">
+                      <td style={{ padding: '1rem 1.25rem', fontSize: '0.875rem', color: '#64748B' }}>
                         {reg.mobile}
                       </td>
-                      <td className="py-3">
+                      <td style={{ padding: '1rem 1.25rem' }}>
                         {reg.attendanceStatus === 'checked_in' ? (
-                          <span className="inline-flex items-center gap-1 text-sm text-success">
-                            <CheckCircle className="w-4 h-4" />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', color: '#10B981' }}>
+                            <CheckCircle style={{ width: '1rem', height: '1rem' }} />
                             Present
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-sm text-gray-400">
-                            <XCircle className="w-4 h-4" />
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', fontSize: '0.8125rem', color: '#94A3B8' }}>
+                            <XCircle style={{ width: '1rem', height: '1rem' }} />
                             Absent
                           </span>
                         )}
                       </td>
-                      <td className="py-3 text-sm text-text-secondary">
+                      <td style={{ padding: '1rem 1.25rem', fontSize: '0.8125rem', color: '#64748B' }}>
                         {formatTime(reg.checkedInAt)}
                       </td>
-                      <td className="py-3">
+                      <td style={{ padding: '1rem 1.25rem' }}>
                         {reg.attendanceStatus !== 'checked_in' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
+                          <button
                             onClick={() => manualCheckIn(reg)}
+                            style={{ ...outlineButtonStyle, padding: '0.375rem 0.75rem', fontSize: '0.8125rem' }}
                           >
                             Check In
-                          </Button>
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -457,18 +564,18 @@ const Attendance = () => {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </div>
         </>
       ) : (
-        <Card className="text-center py-12">
-          <QrCode className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-text-primary mb-2">
+        <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem' }}>
+          <QrCode style={{ width: '4rem', height: '4rem', color: '#CBD5E1', margin: '0 auto 1rem' }} />
+          <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E293B', marginBottom: '0.5rem' }}>
             Select an Event
           </h3>
-          <p className="text-text-secondary">
+          <p style={{ fontSize: '0.875rem', color: '#64748B' }}>
             Choose an event from the dropdown to start taking attendance
           </p>
-        </Card>
+        </div>
       )}
     </div>
   );

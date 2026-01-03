@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { updatePassword, updateEmail } from 'firebase/auth';
+import { updatePassword } from 'firebase/auth';
 import { db, auth, uploadFile } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -12,9 +12,10 @@ import {
   CreditCard,
   Shield,
   Save,
-  Camera
+  Camera,
+  Phone,
+  Building
 } from 'lucide-react';
-import { Button, Input, Card, Toggle, FileUpload } from '../../components/common';
 import toast from 'react-hot-toast';
 
 const Settings = () => {
@@ -23,7 +24,6 @@ const Settings = () => {
   const [saving, setSaving] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
 
-  // Notification settings
   const [notifications, setNotifications] = useState({
     emailRegistrations: true,
     emailPayments: true,
@@ -49,7 +49,6 @@ const Settings = () => {
     handleSubmit: handlePasswordSubmit,
     formState: { errors: passwordErrors },
     reset: resetPassword,
-    watch,
   } = useForm();
 
   const tabs = [
@@ -64,7 +63,6 @@ const Settings = () => {
     try {
       let photoURL = userProfile?.photoURL;
 
-      // Upload profile image if changed
       if (profileImage && typeof profileImage !== 'string') {
         photoURL = await uploadFile(
           profileImage,
@@ -113,7 +111,6 @@ const Settings = () => {
 
   const handleNotificationChange = async (key, value) => {
     setNotifications(prev => ({ ...prev, [key]: value }));
-    // Save to Firestore
     try {
       await updateDoc(doc(db, 'users', user.uid), {
         notifications: { ...notifications, [key]: value },
@@ -124,26 +121,101 @@ const Settings = () => {
     }
   };
 
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.875rem',
+    padding: '1.5rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '0.75rem 1rem',
+    backgroundColor: '#F8FAFC',
+    border: '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    color: '#1E293B',
+    outline: 'none',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    color: '#1E293B',
+    marginBottom: '0.5rem',
+  };
+
+  const buttonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem 1.25rem',
+    backgroundColor: '#E91E63',
+    color: '#FFFFFF',
+    border: 'none',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+  };
+
+  const tabStyle = (isActive) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.625rem 1rem',
+    backgroundColor: isActive ? '#E91E63' : '#FFFFFF',
+    color: isActive ? '#FFFFFF' : '#64748B',
+    border: isActive ? 'none' : '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+  });
+
+  const toggleStyle = (checked) => ({
+    width: '2.75rem',
+    height: '1.5rem',
+    backgroundColor: checked ? '#E91E63' : '#E2E8F0',
+    borderRadius: '1rem',
+    position: 'relative',
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+  });
+
+  const toggleKnobStyle = (checked) => ({
+    width: '1.25rem',
+    height: '1.25rem',
+    backgroundColor: '#FFFFFF',
+    borderRadius: '50%',
+    position: 'absolute',
+    top: '0.125rem',
+    left: checked ? '1.375rem' : '0.125rem',
+    transition: 'left 0.2s',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+  });
+
   return (
-    <div className="max-w-4xl mx-auto" style={{ width: '100%' }}>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
-        <p className="text-text-secondary">Manage your account settings</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '900px' }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>Settings</h1>
+        <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem' }}>
+          Manage your account settings
+        </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-              activeTab === tab.id
-                ? 'bg-primary text-white'
-                : 'bg-white text-text-secondary hover:bg-gray-100'
-            }`}
+            style={tabStyle(activeTab === tab.id)}
           >
-            <tab.icon className="w-4 h-4" />
+            <tab.icon style={{ width: '1rem', height: '1rem' }} />
             {tab.label}
           </button>
         ))}
@@ -151,16 +223,25 @@ const Settings = () => {
 
       {/* Profile Tab */}
       {activeTab === 'profile' && (
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-6">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E293B', marginBottom: '1.5rem' }}>
             Profile Information
           </h2>
 
-          <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="space-y-6">
+          <form onSubmit={handleProfileSubmit(onProfileSubmit)}>
             {/* Profile Photo */}
-            <div className="flex items-center gap-6">
-              <div className="relative">
-                <div className="w-24 h-24 rounded-full bg-primary flex items-center justify-center overflow-hidden">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2rem' }}>
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  width: '5rem',
+                  height: '5rem',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                }}>
                   {(profileImage || userProfile?.photoURL) ? (
                     <img
                       src={typeof profileImage === 'string'
@@ -170,238 +251,279 @@ const Settings = () => {
                           : userProfile?.photoURL
                       }
                       alt="Profile"
-                      className="w-full h-full object-cover"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                   ) : (
-                    <span className="text-3xl text-white font-bold">
+                    <span style={{ fontSize: '1.75rem', color: '#FFFFFF', fontWeight: '600' }}>
                       {userProfile?.displayName?.[0]?.toUpperCase() || 'A'}
                     </span>
                   )}
                 </div>
-                <label className="absolute bottom-0 right-0 p-2 bg-white rounded-full shadow-md cursor-pointer hover:bg-gray-50">
-                  <Camera className="w-4 h-4 text-text-secondary" />
+                <label style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  width: '1.75rem',
+                  height: '1.75rem',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '50%',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}>
+                  <Camera style={{ width: '0.875rem', height: '0.875rem', color: '#64748B' }} />
                   <input
                     type="file"
                     accept="image/*"
-                    className="hidden"
+                    style={{ display: 'none' }}
                     onChange={(e) => setProfileImage(e.target.files?.[0])}
                   />
                 </label>
               </div>
               <div>
-                <h3 className="font-semibold text-text-primary">
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>
                   {userProfile?.displayName || 'Admin'}
                 </h3>
-                <p className="text-sm text-text-secondary">{userProfile?.email}</p>
-                <p className="text-xs text-text-secondary mt-1">
+                <p style={{ fontSize: '0.875rem', color: '#64748B', margin: '0.25rem 0 0' }}>{userProfile?.email}</p>
+                <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: '0.25rem 0 0' }}>
                   Role: {userProfile?.role || 'admin'}
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Full Name"
-                placeholder="Enter your name"
-                icon={User}
-                error={profileErrors.displayName?.message}
-                {...registerProfile('displayName', { required: 'Name is required' })}
-              />
-              <Input
-                label="Email Address"
-                type="email"
-                placeholder="Enter your email"
-                icon={Mail}
-                disabled
-                {...registerProfile('email')}
-              />
-              <Input
-                label="Phone Number"
-                placeholder="Enter phone number"
-                {...registerProfile('phone')}
-              />
-              <Input
-                label="Organization"
-                placeholder="Enter organization name"
-                {...registerProfile('organization')}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label style={labelStyle}>Full Name</label>
+                <div style={{ position: 'relative' }}>
+                  <User style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94A3B8' }} />
+                  <input
+                    type="text"
+                    placeholder="Enter your name"
+                    style={{ ...inputStyle, paddingLeft: '2.5rem' }}
+                    {...registerProfile('displayName', { required: 'Name is required' })}
+                  />
+                </div>
+                {profileErrors.displayName && (
+                  <p style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '0.25rem' }}>{profileErrors.displayName.message}</p>
+                )}
+              </div>
+              <div>
+                <label style={labelStyle}>Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <Mail style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94A3B8' }} />
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    disabled
+                    style={{ ...inputStyle, paddingLeft: '2.5rem', opacity: 0.6, cursor: 'not-allowed' }}
+                    {...registerProfile('email')}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Phone Number</label>
+                <div style={{ position: 'relative' }}>
+                  <Phone style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94A3B8' }} />
+                  <input
+                    type="text"
+                    placeholder="Enter phone number"
+                    style={{ ...inputStyle, paddingLeft: '2.5rem' }}
+                    {...registerProfile('phone')}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Organization</label>
+                <div style={{ position: 'relative' }}>
+                  <Building style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94A3B8' }} />
+                  <input
+                    type="text"
+                    placeholder="Enter organization name"
+                    style={{ ...inputStyle, paddingLeft: '2.5rem' }}
+                    {...registerProfile('organization')}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="flex justify-end">
-              <Button type="submit" loading={saving} icon={Save}>
-                Save Changes
-              </Button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" disabled={saving} style={{ ...buttonStyle, opacity: saving ? 0.7 : 1 }}>
+                <Save style={{ width: '1rem', height: '1rem' }} />
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
           </form>
-        </Card>
+        </div>
       )}
 
       {/* Security Tab */}
       {activeTab === 'security' && (
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-6">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E293B', marginBottom: '1.5rem' }}>
             Change Password
           </h2>
 
-          <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4 max-w-md">
-            <Input
-              label="Current Password"
-              type="password"
-              placeholder="Enter current password"
-              icon={Lock}
-              error={passwordErrors.currentPassword?.message}
-              {...registerPassword('currentPassword', { required: 'Current password is required' })}
-            />
-            <Input
-              label="New Password"
-              type="password"
-              placeholder="Enter new password"
-              icon={Lock}
-              error={passwordErrors.newPassword?.message}
-              {...registerPassword('newPassword', {
-                required: 'New password is required',
-                minLength: { value: 6, message: 'Password must be at least 6 characters' }
-              })}
-            />
-            <Input
-              label="Confirm New Password"
-              type="password"
-              placeholder="Confirm new password"
-              icon={Lock}
-              error={passwordErrors.confirmPassword?.message}
-              {...registerPassword('confirmPassword', { required: 'Please confirm password' })}
-            />
+          <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} style={{ maxWidth: '400px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div>
+                <label style={labelStyle}>Current Password</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94A3B8' }} />
+                  <input
+                    type="password"
+                    placeholder="Enter current password"
+                    style={{ ...inputStyle, paddingLeft: '2.5rem' }}
+                    {...registerPassword('currentPassword', { required: 'Current password is required' })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>New Password</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94A3B8' }} />
+                  <input
+                    type="password"
+                    placeholder="Enter new password"
+                    style={{ ...inputStyle, paddingLeft: '2.5rem' }}
+                    {...registerPassword('newPassword', {
+                      required: 'New password is required',
+                      minLength: { value: 6, message: 'Password must be at least 6 characters' }
+                    })}
+                  />
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Confirm New Password</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#94A3B8' }} />
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    style={{ ...inputStyle, paddingLeft: '2.5rem' }}
+                    {...registerPassword('confirmPassword', { required: 'Please confirm password' })}
+                  />
+                </div>
+              </div>
+            </div>
 
-            <Button type="submit" loading={saving} icon={Shield}>
-              Update Password
-            </Button>
+            <button type="submit" disabled={saving} style={{ ...buttonStyle, opacity: saving ? 0.7 : 1 }}>
+              <Shield style={{ width: '1rem', height: '1rem' }} />
+              {saving ? 'Updating...' : 'Update Password'}
+            </button>
           </form>
 
-          <div className="mt-8 pt-8 border-t border-gray-100">
-            <h3 className="font-semibold text-text-primary mb-4">Two-Factor Authentication</h3>
-            <p className="text-sm text-text-secondary mb-4">
+          <div style={{ marginTop: '2rem', paddingTop: '2rem', borderTop: '1px solid #F1F5F9' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '0.5rem' }}>Two-Factor Authentication</h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '1rem' }}>
               Add an extra layer of security to your account
             </p>
-            <Button variant="outline" disabled>
+            <button style={{ ...buttonStyle, backgroundColor: '#FFFFFF', color: '#64748B', border: '1px solid #E2E8F0', opacity: 0.6, cursor: 'not-allowed' }} disabled>
               Enable 2FA (Coming Soon)
-            </Button>
+            </button>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Notifications Tab */}
       {activeTab === 'notifications' && (
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-6">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E293B', marginBottom: '1.5rem' }}>
             Notification Preferences
           </h2>
 
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-medium text-text-primary mb-4">Email Notifications</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+          <div>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>Email Notifications</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {[
+                { key: 'emailRegistrations', title: 'New Registrations', desc: 'Get notified when someone registers for your event' },
+                { key: 'emailPayments', title: 'Payment Received', desc: 'Get notified when a payment is completed' },
+                { key: 'emailReminders', title: 'Event Reminders', desc: 'Receive reminders before your events' },
+              ].map(item => (
+                <div key={item.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div>
-                    <p className="font-medium text-text-primary">New Registrations</p>
-                    <p className="text-sm text-text-secondary">
-                      Get notified when someone registers for your event
-                    </p>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1E293B', margin: 0 }}>{item.title}</p>
+                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>{item.desc}</p>
                   </div>
-                  <Toggle
-                    checked={notifications.emailRegistrations}
-                    onChange={(v) => handleNotificationChange('emailRegistrations', v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-text-primary">Payment Received</p>
-                    <p className="text-sm text-text-secondary">
-                      Get notified when a payment is completed
-                    </p>
+                  <div
+                    style={toggleStyle(notifications[item.key])}
+                    onClick={() => handleNotificationChange(item.key, !notifications[item.key])}
+                  >
+                    <div style={toggleKnobStyle(notifications[item.key])} />
                   </div>
-                  <Toggle
-                    checked={notifications.emailPayments}
-                    onChange={(v) => handleNotificationChange('emailPayments', v)}
-                  />
                 </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-text-primary">Event Reminders</p>
-                    <p className="text-sm text-text-secondary">
-                      Receive reminders before your events
-                    </p>
-                  </div>
-                  <Toggle
-                    checked={notifications.emailReminders}
-                    onChange={(v) => handleNotificationChange('emailReminders', v)}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
 
-            <div className="pt-6 border-t border-gray-100">
-              <h3 className="font-medium text-text-primary mb-4">Browser Notifications</h3>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-text-primary">Push Notifications</p>
-                  <p className="text-sm text-text-secondary">
-                    Receive notifications in your browser
-                  </p>
-                </div>
-                <Toggle
-                  checked={notifications.browserNotifications}
-                  onChange={(v) => handleNotificationChange('browserNotifications', v)}
-                />
+          <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #F1F5F9' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>Browser Notifications</h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1E293B', margin: 0 }}>Push Notifications</p>
+                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>Receive notifications in your browser</p>
+              </div>
+              <div
+                style={toggleStyle(notifications.browserNotifications)}
+                onClick={() => handleNotificationChange('browserNotifications', !notifications.browserNotifications)}
+              >
+                <div style={toggleKnobStyle(notifications.browserNotifications)} />
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       )}
 
       {/* Payment Tab */}
       {activeTab === 'payment' && (
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-6">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E293B', marginBottom: '1.5rem' }}>
             Payment Settings
           </h2>
 
-          <div className="space-y-6">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-medium text-text-primary mb-2">Razorpay Integration</h3>
-              <p className="text-sm text-text-secondary mb-4">
-                Your Razorpay account is connected and ready to accept payments.
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-success rounded-full" />
-                <span className="text-sm text-success font-medium">Connected</span>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-medium text-text-primary mb-4">Payment Methods Accepted</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {['UPI', 'Credit Card', 'Debit Card', 'Net Banking'].map((method) => (
-                  <div
-                    key={method}
-                    className="p-3 bg-gray-50 rounded-lg text-center text-sm text-text-secondary"
-                  >
-                    {method}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-gray-100">
-              <h3 className="font-medium text-text-primary mb-2">Bank Account</h3>
-              <p className="text-sm text-text-secondary mb-4">
-                Payments are settled to your linked Razorpay account
-              </p>
-              <Button variant="outline" disabled>
-                Manage in Razorpay Dashboard
-              </Button>
+          <div style={{ padding: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '0.75rem', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.5rem' }}>Razorpay Integration</h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', margin: '0 0 1rem' }}>
+              Your Razorpay account is connected and ready to accept payments.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '0.625rem', height: '0.625rem', backgroundColor: '#10B981', borderRadius: '50%' }} />
+              <span style={{ fontSize: '0.875rem', color: '#10B981', fontWeight: '500' }}>Connected</span>
             </div>
           </div>
-        </Card>
+
+          <div style={{ marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>Payment Methods Accepted</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: '0.75rem' }}>
+              {['UPI', 'Credit Card', 'Debit Card', 'Net Banking'].map((method) => (
+                <div
+                  key={method}
+                  style={{
+                    padding: '0.875rem',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: '0.5rem',
+                    textAlign: 'center',
+                    fontSize: '0.875rem',
+                    color: '#64748B',
+                  }}
+                >
+                  {method}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ paddingTop: '1.5rem', borderTop: '1px solid #F1F5F9' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', marginBottom: '0.5rem' }}>Bank Account</h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '1rem' }}>
+              Payments are settled to your linked Razorpay account
+            </p>
+            <button style={{ ...buttonStyle, backgroundColor: '#FFFFFF', color: '#64748B', border: '1px solid #E2E8F0', opacity: 0.6, cursor: 'not-allowed' }} disabled>
+              Manage in Razorpay Dashboard
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -6,11 +6,11 @@ import {
   CreditCard,
   Download,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ChevronDown
 } from 'lucide-react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
-import { Button, Card, Select } from '../../components/common';
 import {
   AreaChart,
   Area,
@@ -19,8 +19,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -28,7 +26,7 @@ import {
   Line,
   Legend
 } from 'recharts';
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval } from 'date-fns';
+import { format, subDays, eachDayOfInterval } from 'date-fns';
 import { CHART_COLORS, EVENT_CATEGORIES } from '../../utils/constants';
 import toast from 'react-hot-toast';
 
@@ -55,7 +53,6 @@ const Analytics = () => {
     try {
       setLoading(true);
 
-      // Fetch all data
       const [eventsSnap, regsSnap, paymentsSnap] = await Promise.all([
         getDocs(collection(db, 'events')),
         getDocs(collection(db, 'registrations')),
@@ -66,7 +63,6 @@ const Analytics = () => {
       const registrations = regsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       const payments = paymentsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      // Calculate overall stats
       const totalRevenue = payments
         .filter(p => p.status === 'completed')
         .reduce((sum, p) => sum + (p.amount || 0), 0);
@@ -83,14 +79,12 @@ const Analytics = () => {
         avgAttendance,
       });
 
-      // Generate time-based data
       const days = timeRange === '7days' ? 7 : timeRange === '30days' ? 30 : 90;
       const dateRange = eachDayOfInterval({
         start: subDays(new Date(), days - 1),
         end: new Date(),
       });
 
-      // Registration data over time
       const regData = dateRange.map(date => {
         const dayRegs = registrations.filter(r => {
           const regDate = r.createdAt?.toDate?.();
@@ -103,7 +97,6 @@ const Analytics = () => {
       });
       setRegistrationData(regData);
 
-      // Revenue data over time
       const revData = dateRange.map(date => {
         const dayPayments = payments.filter(p => {
           const payDate = p.createdAt?.toDate?.();
@@ -118,7 +111,6 @@ const Analytics = () => {
       });
       setRevenueData(revData);
 
-      // Category distribution
       const categories = {};
       events.forEach(e => {
         categories[e.category] = (categories[e.category] || 0) + 1;
@@ -130,7 +122,6 @@ const Analytics = () => {
         }))
       );
 
-      // Event type distribution
       const types = { online: 0, offline: 0 };
       events.forEach(e => {
         types[e.type] = (types[e.type] || 0) + 1;
@@ -140,7 +131,6 @@ const Analytics = () => {
         { name: 'Offline', value: types.offline },
       ]);
 
-      // Top events by registrations
       const eventRegs = events.map(e => ({
         ...e,
         registrations: registrations.filter(r => r.eventId === e.id).length,
@@ -162,11 +152,39 @@ const Analytics = () => {
     }
   };
 
-  const timeRangeOptions = [
-    { value: '7days', label: 'Last 7 Days' },
-    { value: '30days', label: 'Last 30 Days' },
-    { value: '90days', label: 'Last 90 Days' },
-  ];
+  const cardStyle = {
+    backgroundColor: '#FFFFFF',
+    borderRadius: '0.875rem',
+    padding: '1.25rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  };
+
+  const selectStyle = {
+    padding: '0.625rem 2rem 0.625rem 1rem',
+    backgroundColor: '#F8FAFC',
+    border: '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    color: '#1E293B',
+    outline: 'none',
+    appearance: 'none',
+    cursor: 'pointer',
+    minWidth: '140px',
+  };
+
+  const buttonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.625rem 1rem',
+    backgroundColor: '#FFFFFF',
+    color: '#64748B',
+    border: '1px solid #E2E8F0',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+  };
 
   const statCards = [
     {
@@ -175,7 +193,8 @@ const Analytics = () => {
       icon: Calendar,
       change: '+12%',
       trend: 'up',
-      color: 'bg-primary',
+      color: '#8B5CF6',
+      bgColor: 'rgba(139, 92, 246, 0.1)',
     },
     {
       title: 'Registrations',
@@ -183,7 +202,8 @@ const Analytics = () => {
       icon: Users,
       change: '+8%',
       trend: 'up',
-      color: 'bg-accent',
+      color: '#E91E63',
+      bgColor: 'rgba(233, 30, 99, 0.1)',
     },
     {
       title: 'Total Revenue',
@@ -191,7 +211,8 @@ const Analytics = () => {
       icon: CreditCard,
       change: '+23%',
       trend: 'up',
-      color: 'bg-success',
+      color: '#10B981',
+      bgColor: 'rgba(16, 185, 129, 0.1)',
     },
     {
       title: 'Avg. Attendance',
@@ -199,72 +220,103 @@ const Analytics = () => {
       icon: TrendingUp,
       change: '-5%',
       trend: 'down',
-      color: 'bg-warning',
+      color: '#F59E0B',
+      bgColor: 'rgba(245, 158, 11, 0.1)',
     },
   ];
 
   return (
-    <div className="space-y-6" style={{ width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Analytics</h1>
-          <p className="text-text-secondary">Track performance and insights</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>Analytics</h1>
+          <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem' }}>
+            Track performance and insights
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Select
-            options={timeRangeOptions}
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="w-40"
-          />
-          <Button variant="outline" icon={Download}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ position: 'relative' }}>
+            <select
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              style={selectStyle}
+            >
+              <option value="7days">Last 7 Days</option>
+              <option value="30days">Last 30 Days</option>
+              <option value="90days">Last 90 Days</option>
+            </select>
+            <ChevronDown style={{
+              position: 'absolute',
+              right: '0.75rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '1rem',
+              height: '1rem',
+              color: '#94A3B8',
+              pointerEvents: 'none',
+            }} />
+          </div>
+          <button style={buttonStyle}>
+            <Download style={{ width: '1rem', height: '1rem' }} />
             Export
-          </Button>
+          </button>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: '1.25rem' }}>
         {statCards.map((stat, index) => (
-          <Card key={index}>
-            <div className="flex items-start justify-between">
+          <div key={index} style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div>
-                <p className="text-sm text-text-secondary mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-text-primary">{stat.value}</p>
-                <div className={`flex items-center mt-2 text-sm ${
-                  stat.trend === 'up' ? 'text-success' : 'text-error'
-                }`}>
+                <p style={{ fontSize: '0.8125rem', color: '#64748B', marginBottom: '0.25rem' }}>{stat.title}</p>
+                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>{stat.value}</p>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  marginTop: '0.5rem',
+                  fontSize: '0.8125rem',
+                  color: stat.trend === 'up' ? '#10B981' : '#EF4444',
+                }}>
                   {stat.trend === 'up' ? (
-                    <ArrowUpRight className="w-4 h-4 mr-1" />
+                    <ArrowUpRight style={{ width: '1rem', height: '1rem', marginRight: '0.25rem' }} />
                   ) : (
-                    <ArrowDownRight className="w-4 h-4 mr-1" />
+                    <ArrowDownRight style={{ width: '1rem', height: '1rem', marginRight: '0.25rem' }} />
                   )}
                   {stat.change} from last period
                 </div>
               </div>
-              <div className={`p-3 rounded-xl ${stat.color}`}>
-                <stat.icon className="w-6 h-6 text-white" />
+              <div style={{
+                width: '2.75rem',
+                height: '2.75rem',
+                borderRadius: '0.75rem',
+                backgroundColor: stat.bgColor,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <stat.icon style={{ width: '1.25rem', height: '1.25rem', color: stat.color }} />
               </div>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
       {/* Charts Row 1 */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: '1.5rem' }}>
         {/* Registration Trend */}
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>
             Registration Trend
           </h2>
-          <div className="h-72">
+          <div style={{ height: '280px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={registrationData}>
                 <defs>
                   <linearGradient id="colorRegs" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#1E3A5F" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#1E3A5F" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -274,21 +326,21 @@ const Analytics = () => {
                 <Area
                   type="monotone"
                   dataKey="registrations"
-                  stroke="#1E3A5F"
+                  stroke="#8B5CF6"
                   strokeWidth={2}
                   fill="url(#colorRegs)"
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
 
         {/* Revenue Trend */}
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>
             Revenue Trend
           </h2>
-          <div className="h-72">
+          <div style={{ height: '280px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
@@ -305,17 +357,17 @@ const Analytics = () => {
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Charts Row 2 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3" style={{ gap: '1.5rem' }}>
         {/* Category Distribution */}
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>
             Events by Category
           </h2>
-          <div className="h-64">
+          <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -336,14 +388,14 @@ const Analytics = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
 
         {/* Event Type Distribution */}
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>
             Online vs Offline
           </h2>
-          <div className="h-64">
+          <div style={{ height: '250px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -363,43 +415,58 @@ const Analytics = () => {
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </Card>
+        </div>
 
         {/* Top Events */}
-        <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>
             Top Events
           </h2>
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {topEvents.map((event, index) => (
-              <div key={event.id} className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold ${
-                  index === 0 ? 'bg-accent' :
-                  index === 1 ? 'bg-primary' :
-                  'bg-gray-400'
-                }`}>
+              <div key={event.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  width: '2rem',
+                  height: '2rem',
+                  borderRadius: '0.5rem',
+                  backgroundColor: index === 0 ? '#E91E63' : index === 1 ? '#8B5CF6' : '#94A3B8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#FFFFFF',
+                  fontSize: '0.8125rem',
+                  fontWeight: '700',
+                }}>
                   {index + 1}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: '#1E293B',
+                    margin: 0,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}>
                     {event.title}
                   </p>
-                  <p className="text-xs text-text-secondary">
+                  <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>
                     {event.registrations} registrations
                   </p>
                 </div>
-                <p className="text-sm font-semibold text-text-primary">
+                <p style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>
                   ₹{event.revenue.toLocaleString()}
                 </p>
               </div>
             ))}
             {topEvents.length === 0 && (
-              <p className="text-center text-text-secondary py-8">
+              <p style={{ textAlign: 'center', color: '#64748B', padding: '2rem' }}>
                 No events yet
               </p>
             )}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );
