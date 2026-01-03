@@ -9,12 +9,14 @@ import {
   Eye,
   Copy,
   Users,
-  MoreVertical
+  MoreVertical,
+  QrCode
 } from 'lucide-react';
 import { collection, query, orderBy, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import Button from '../../components/common/Button';
 import { StatusBadge } from '../../components/common/Badge';
+import { EventQRModal } from '../../components/common';
 import { format } from 'date-fns';
 import { EVENT_CATEGORIES } from '../../utils/constants';
 import toast from 'react-hot-toast';
@@ -28,6 +30,7 @@ const ManageEvents = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [deleteModal, setDeleteModal] = useState({ open: false, event: null });
   const [activeMenu, setActiveMenu] = useState(null);
+  const [qrModal, setQrModal] = useState({ open: false, eventId: null, eventTitle: '' });
 
   useEffect(() => {
     fetchEvents();
@@ -100,7 +103,7 @@ const ManageEvents = () => {
     return format(date, 'MMM dd, yyyy');
   };
 
-  const containerStyle = { display: 'flex', flexDirection: 'column', gap: '1.5rem' };
+  const containerStyle = { display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' };
   const headerStyle = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' };
   const titleStyle = { fontSize: '1.5rem', fontWeight: 'bold', color: '#1E3A5F' };
   const subtitleStyle = { color: '#64748B', fontSize: '0.875rem' };
@@ -372,6 +375,15 @@ const ManageEvents = () => {
                             <Eye style={{ width: '1rem', height: '1rem', color: '#64748B' }} />
                           </button>
                         </Link>
+                        <button
+                          style={actionBtnStyle}
+                          title="QR Code & Link"
+                          onClick={() => setQrModal({ open: true, eventId: event.id, eventTitle: event.title })}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          <QrCode style={{ width: '1rem', height: '1rem', color: '#64748B' }} />
+                        </button>
                         <Link to={`/admin/events/${event.id}/edit`}>
                           <button style={actionBtnStyle} title="Edit"
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
@@ -477,6 +489,14 @@ const ManageEvents = () => {
           </div>
         </div>
       )}
+
+      {/* QR Code Modal */}
+      <EventQRModal
+        isOpen={qrModal.open}
+        onClose={() => setQrModal({ open: false, eventId: null, eventTitle: '' })}
+        eventId={qrModal.eventId}
+        eventTitle={qrModal.eventTitle}
+      />
     </div>
   );
 };

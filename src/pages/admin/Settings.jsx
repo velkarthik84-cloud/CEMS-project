@@ -125,7 +125,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto" style={{ width: '100%' }}>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-text-primary">Settings</h1>
         <p className="text-text-secondary">Manage your account settings</p>

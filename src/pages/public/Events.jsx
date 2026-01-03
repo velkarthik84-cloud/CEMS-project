@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, MapPin, Clock, Search, Filter, Grid, List } from 'lucide-react';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { Button, Card, Select } from '../../components/common';
 import { format } from 'date-fns';
@@ -29,11 +29,16 @@ const Events = () => {
       const eventsRef = collection(db, 'events');
       const q = query(
         eventsRef,
-        where('status', '==', 'published'),
-        orderBy('eventDate', 'asc')
+        where('status', '==', 'published')
       );
       const snapshot = await getDocs(q);
-      const eventsList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const eventsList = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => {
+          const dateA = a.eventDate?.toDate ? a.eventDate.toDate() : new Date(a.eventDate);
+          const dateB = b.eventDate?.toDate ? b.eventDate.toDate() : new Date(b.eventDate);
+          return dateA - dateB;
+        });
       setEvents(eventsList);
       setFilteredEvents(eventsList);
     } catch (error) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Users, MapPin, Clock, ArrowRight, Search, Star, TrendingUp } from 'lucide-react';
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { Button, Card } from '../../components/common';
 import { format } from 'date-fns';
@@ -22,12 +22,17 @@ const Home = () => {
       const eventsRef = collection(db, 'events');
       const q = query(
         eventsRef,
-        where('status', '==', 'published'),
-        orderBy('eventDate', 'asc'),
-        limit(8)
+        where('status', '==', 'published')
       );
       const snapshot = await getDocs(q);
-      const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const events = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => {
+          const dateA = a.eventDate?.toDate ? a.eventDate.toDate() : new Date(a.eventDate);
+          const dateB = b.eventDate?.toDate ? b.eventDate.toDate() : new Date(b.eventDate);
+          return dateA - dateB;
+        })
+        .slice(0, 8);
 
       setFeaturedEvents(events.slice(0, 3));
       setUpcomingEvents(events);

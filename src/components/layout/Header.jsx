@@ -1,21 +1,48 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   Menu,
   Search,
   Bell,
-  User,
   Settings,
+  User,
   LogOut,
   ChevronDown
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const Header = ({ onMenuClick, title }) => {
+const pageTitles = {
+  '/admin': 'Dashboard',
+  '/admin/events': 'Events',
+  '/admin/events/create': 'Create Event',
+  '/admin/participants': 'Bookings',
+  '/admin/attendance': 'Attendance',
+  '/admin/payments': 'Payments',
+  '/admin/analytics': 'Analytics',
+  '/admin/settings': 'Settings',
+};
+
+const Header = ({ onMenuClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const { userProfile, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get page title based on current path
+  const getPageTitle = () => {
+    // Check for exact match first
+    if (pageTitles[location.pathname]) {
+      return pageTitles[location.pathname];
+    }
+    // Check for partial match (for nested routes)
+    for (const [path, title] of Object.entries(pageTitles)) {
+      if (location.pathname.startsWith(path + '/')) {
+        return title;
+      }
+    }
+    return 'Dashboard';
+  };
 
   const handleLogout = async () => {
     try {
@@ -26,190 +53,93 @@ const Header = ({ onMenuClick, title }) => {
     }
   };
 
-  const headerStyle = {
-    position: 'sticky',
-    top: 0,
-    zIndex: 30,
-    backgroundColor: '#FFFFFF',
-    borderBottom: '1px solid #F1F5F9',
-  };
-
-  const containerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: '4rem',
-    padding: '0 1rem',
-  };
-
-  const leftSideStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  };
-
-  const menuButtonStyle = {
-    padding: '0.5rem',
-    borderRadius: '0.5rem',
-    color: '#64748B',
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-  };
-
-  const titleStyle = {
-    fontSize: '1.25rem',
-    fontWeight: '600',
-    color: '#1E3A5F',
-  };
-
-  const searchContainerStyle = {
-    flex: 1,
-    maxWidth: '28rem',
-    margin: '0 1rem',
-    position: 'relative',
-  };
-
-  const searchInputStyle = {
-    width: '100%',
-    padding: '0.5rem 1rem 0.5rem 2.5rem',
-    backgroundColor: '#F8FAFC',
-    border: '1px solid #E2E8F0',
-    borderRadius: '0.5rem',
-    fontSize: '0.875rem',
-    outline: 'none',
-  };
-
-  const rightSideStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-  };
-
-  const iconButtonStyle = {
-    position: 'relative',
-    padding: '0.5rem',
-    borderRadius: '0.5rem',
-    color: '#64748B',
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-  };
-
-  const notificationDotStyle = {
-    position: 'absolute',
-    top: '0.25rem',
-    right: '0.25rem',
-    width: '0.5rem',
-    height: '0.5rem',
-    backgroundColor: '#E91E63',
-    borderRadius: '50%',
-  };
-
-  const userButtonStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.5rem',
-    borderRadius: '0.5rem',
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-  };
-
-  const avatarStyle = {
-    width: '2rem',
-    height: '2rem',
-    backgroundColor: '#1E3A5F',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  };
-
-  const dropdownStyle = {
-    position: 'absolute',
-    right: 0,
-    marginTop: '0.5rem',
-    width: '12rem',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '0.75rem',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-    border: '1px solid #F1F5F9',
-    zIndex: 50,
-    padding: '0.25rem 0',
-  };
-
-  const dropdownItemStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    padding: '0.5rem 1rem',
-    fontSize: '0.875rem',
-    color: '#1E3A5F',
-    textDecoration: 'none',
-    backgroundColor: 'transparent',
-    border: 'none',
-    width: '100%',
-    cursor: 'pointer',
-    transition: 'background-color 0.2s ease',
-  };
-
-  const overlayStyle = {
-    position: 'fixed',
-    inset: 0,
-    zIndex: 40,
-  };
-
-  const notificationDropdownStyle = {
-    position: 'absolute',
-    right: 0,
-    marginTop: '0.5rem',
-    width: '20rem',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '0.75rem',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-    border: '1px solid #F1F5F9',
-    zIndex: 50,
-  };
-
   return (
-    <header style={headerStyle}>
-      <div style={containerStyle}>
-        {/* Left side */}
-        <div style={leftSideStyle}>
+    <header style={{
+      backgroundColor: '#FFFFFF',
+      borderBottom: '1px solid #E2E8F0',
+      padding: '1rem 1.5rem',
+      position: 'sticky',
+      top: 0,
+      zIndex: 30,
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1.5rem',
+      }}>
+        {/* Left side - Menu button & Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <button
             onClick={onMenuClick}
-            style={menuButtonStyle}
+            style={{
+              padding: '0.5rem',
+              borderRadius: '0.5rem',
+              color: '#64748B',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
             className="lg:hidden"
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
-            <Menu style={{ width: '1.25rem', height: '1.25rem' }} />
+            <Menu style={{ width: '1.5rem', height: '1.5rem' }} />
           </button>
 
-          {title && (
-            <h1 style={titleStyle} className="hidden sm:block">
-              {title}
-            </h1>
-          )}
+          <h1 style={{
+            fontSize: '1.5rem',
+            fontWeight: '700',
+            color: '#1E293B',
+            margin: 0,
+          }}>
+            {getPageTitle()}
+          </h1>
         </div>
 
-        {/* Search Bar */}
-        <div style={searchContainerStyle} className="hidden md:flex">
-          <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1rem', height: '1rem', color: '#64748B' }} />
+        {/* Center - Search Bar */}
+        <div style={{
+          flex: 1,
+          maxWidth: '400px',
+          position: 'relative',
+        }} className="hidden md:block">
+          <Search style={{
+            position: 'absolute',
+            left: '1rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '1.125rem',
+            height: '1.125rem',
+            color: '#94A3B8',
+          }} />
           <input
             type="text"
             placeholder="Search anything..."
-            style={searchInputStyle}
+            style={{
+              width: '100%',
+              padding: '0.75rem 1rem 0.75rem 2.75rem',
+              backgroundColor: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              borderRadius: '0.75rem',
+              fontSize: '0.875rem',
+              color: '#1E293B',
+              outline: 'none',
+            }}
           />
         </div>
 
-        {/* Right side */}
-        <div style={rightSideStyle}>
-          {/* Mobile Search */}
-          <button style={iconButtonStyle} className="md:hidden">
+        {/* Right side - Icons & User */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {/* Search button - mobile */}
+          <button
+            style={{
+              padding: '0.625rem',
+              borderRadius: '0.5rem',
+              color: '#64748B',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+            className="md:hidden"
+          >
             <Search style={{ width: '1.25rem', height: '1.25rem' }} />
           </button>
 
@@ -217,38 +147,97 @@ const Header = ({ onMenuClick, title }) => {
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              style={iconButtonStyle}
+              style={{
+                padding: '0.625rem',
+                borderRadius: '0.5rem',
+                color: '#64748B',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                position: 'relative',
+              }}
             >
               <Bell style={{ width: '1.25rem', height: '1.25rem' }} />
-              <span style={notificationDotStyle} />
+              <span style={{
+                position: 'absolute',
+                top: '0.375rem',
+                right: '0.375rem',
+                width: '0.5rem',
+                height: '0.5rem',
+                backgroundColor: '#E91E63',
+                borderRadius: '50%',
+                border: '2px solid #FFFFFF',
+              }} />
             </button>
 
             {showNotifications && (
               <>
-                <div style={overlayStyle} onClick={() => setShowNotifications(false)} />
-                <div style={notificationDropdownStyle}>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                  onClick={() => setShowNotifications(false)}
+                />
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '100%',
+                  marginTop: '0.5rem',
+                  width: '20rem',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                  border: '1px solid #E2E8F0',
+                  zIndex: 50,
+                }}>
                   <div style={{ padding: '1rem', borderBottom: '1px solid #F1F5F9' }}>
-                    <h3 style={{ fontWeight: '600', color: '#1E3A5F' }}>Notifications</h3>
+                    <h3 style={{ fontWeight: '600', color: '#1E293B' }}>Notifications</h3>
                   </div>
-                  <div style={{ maxHeight: '18rem', overflow: 'auto' }}>
-                    <div style={{ padding: '1rem', textAlign: 'center', color: '#64748B', fontSize: '0.875rem' }}>
-                      No new notifications
-                    </div>
+                  <div style={{ padding: '1rem', textAlign: 'center', color: '#94A3B8' }}>
+                    No new notifications
                   </div>
                 </div>
               </>
             )}
           </div>
 
+          {/* Settings */}
+          <button
+            style={{
+              padding: '0.625rem',
+              borderRadius: '0.5rem',
+              color: '#64748B',
+              backgroundColor: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <Settings style={{ width: '1.25rem', height: '1.25rem' }} />
+          </button>
+
           {/* User Menu */}
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              style={userButtonStyle}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.375rem 0.5rem',
+                borderRadius: '0.75rem',
+                backgroundColor: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
             >
-              <div style={avatarStyle}>
+              <div style={{
+                width: '2.25rem',
+                height: '2.25rem',
+                background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+              }}>
                 {userProfile?.photoURL ? (
                   <img
                     src={userProfile.photoURL}
@@ -256,32 +245,54 @@ const Header = ({ onMenuClick, title }) => {
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   />
                 ) : (
-                  <span style={{ color: '#FFFFFF', fontSize: '0.875rem', fontWeight: '500' }}>
+                  <span style={{ color: '#FFFFFF', fontSize: '0.875rem', fontWeight: '600' }}>
                     {userProfile?.displayName?.[0]?.toUpperCase() || 'A'}
                   </span>
                 )}
               </div>
               <div className="hidden sm:block" style={{ textAlign: 'left' }}>
-                <p style={{ fontSize: '0.875rem', fontWeight: '500', color: '#1E3A5F' }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>
                   {userProfile?.displayName || 'Admin'}
                 </p>
-                <p style={{ fontSize: '0.75rem', color: '#64748B' }}>
-                  {userProfile?.role || 'admin'}
+                <p style={{ fontSize: '0.75rem', color: '#94A3B8', margin: 0 }}>
+                  Admin
                 </p>
               </div>
-              <ChevronDown style={{ width: '1rem', height: '1rem', color: '#64748B' }} className="hidden sm:block" />
+              <ChevronDown style={{ width: '1rem', height: '1rem', color: '#94A3B8' }} className="hidden sm:block" />
             </button>
 
             {showDropdown && (
               <>
-                <div style={overlayStyle} onClick={() => setShowDropdown(false)} />
-                <div style={dropdownStyle}>
+                <div
+                  style={{ position: 'fixed', inset: 0, zIndex: 40 }}
+                  onClick={() => setShowDropdown(false)}
+                />
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: '100%',
+                  marginTop: '0.5rem',
+                  width: '12rem',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: '0.75rem',
+                  boxShadow: '0 10px 40px rgba(0,0,0,0.12)',
+                  border: '1px solid #E2E8F0',
+                  zIndex: 50,
+                  padding: '0.5rem',
+                }}>
                   <Link
                     to="/admin/settings"
                     onClick={() => setShowDropdown(false)}
-                    style={dropdownItemStyle}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.625rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      color: '#475569',
+                      textDecoration: 'none',
+                      fontSize: '0.875rem',
+                    }}
                   >
                     <User style={{ width: '1rem', height: '1rem' }} />
                     Profile
@@ -289,19 +300,36 @@ const Header = ({ onMenuClick, title }) => {
                   <Link
                     to="/admin/settings"
                     onClick={() => setShowDropdown(false)}
-                    style={dropdownItemStyle}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.625rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      color: '#475569',
+                      textDecoration: 'none',
+                      fontSize: '0.875rem',
+                    }}
                   >
                     <Settings style={{ width: '1rem', height: '1rem' }} />
                     Settings
                   </Link>
-                  <hr style={{ margin: '0.25rem 0', border: 'none', borderTop: '1px solid #F1F5F9' }} />
+                  <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid #F1F5F9' }} />
                   <button
                     onClick={handleLogout}
-                    style={{ ...dropdownItemStyle, color: '#EF4444' }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.75rem',
+                      padding: '0.625rem 0.75rem',
+                      borderRadius: '0.5rem',
+                      color: '#EF4444',
+                      backgroundColor: 'transparent',
+                      border: 'none',
+                      width: '100%',
+                      cursor: 'pointer',
+                      fontSize: '0.875rem',
+                    }}
                   >
                     <LogOut style={{ width: '1rem', height: '1rem' }} />
                     Logout

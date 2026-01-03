@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
+import { EventQRModal } from '../../components/common';
 import { EVENT_CATEGORIES, EVENT_TYPES } from '../../utils/constants';
 import toast from 'react-hot-toast';
 
@@ -47,6 +48,7 @@ const CreateEvent = () => {
   const [bannerPreview, setBannerPreview] = useState(null);
   const [isFree, setIsFree] = useState(true);
   const [mandatoryPayment, setMandatoryPayment] = useState(true);
+  const [qrModal, setQrModal] = useState({ open: false, eventId: null, eventTitle: '' });
 
   const {
     register,
@@ -71,6 +73,11 @@ const CreateEvent = () => {
       reader.onloadend = () => setBannerPreview(reader.result);
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleQrModalClose = () => {
+    setQrModal({ open: false, eventId: null, eventTitle: '' });
+    navigate('/admin/events');
   };
 
   const onSubmit = async (data) => {
@@ -107,7 +114,7 @@ const CreateEvent = () => {
 
       const docRef = await addDoc(collection(db, 'events'), eventData);
       toast.success('Event created successfully!');
-      navigate(`/admin/events/${docRef.id}/edit`);
+      setQrModal({ open: true, eventId: docRef.id, eventTitle: data.title });
     } catch (error) {
       console.error('Error creating event:', error);
       toast.error('Failed to create event. Please try again.');
@@ -117,7 +124,7 @@ const CreateEvent = () => {
   };
 
   // Styles
-  const containerStyle = { maxWidth: '56rem', margin: '0 auto' };
+  const containerStyle = { maxWidth: '56rem', margin: '0 auto', width: '100%' };
   const headerStyle = { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' };
   const backBtnStyle = {
     padding: '0.5rem',
@@ -492,6 +499,14 @@ const CreateEvent = () => {
           </Button>
         </div>
       </form>
+
+      {/* QR Code Modal */}
+      <EventQRModal
+        isOpen={qrModal.open}
+        onClose={handleQrModalClose}
+        eventId={qrModal.eventId}
+        eventTitle={qrModal.eventTitle}
+      />
     </div>
   );
 };

@@ -9,3 +9,4 @@ export { default as Table, Pagination } from './Table';
 export { default as Toggle } from './Toggle';
 export { default as FileUpload } from './FileUpload';
 export { default as Loading, Skeleton, PageLoader } from './Loading';
+export { default as EventQRModal } from './EventQRModal';
