@@ -12,13 +12,16 @@ import {
   Phone,
   Building,
   AlertCircle,
-  CreditCard
+  CreditCard,
+  CheckCircle,
+  ArrowLeft,
+  Upload,
+  X,
+  FileText
 } from 'lucide-react';
 import { doc, getDoc, addDoc, collection, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { db, uploadFile } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button, Input, Textarea, Card, FileUpload } from '../../components/common';
-import { PageLoader } from '../../components/common/Loading';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
@@ -40,7 +43,10 @@ const EventRegister = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [idProof, setIdProof] = useState(null);
-  const [step, setStep] = useState(1); // 1: Form, 2: Payment, 3: Success
+  const [step, setStep] = useState(1);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [registrationData, setRegistrationData] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 800);
 
   const {
     register,
@@ -53,10 +59,12 @@ const EventRegister = () => {
 
   useEffect(() => {
     fetchEvent();
+    const handleResize = () => setIsMobile(window.innerWidth < 800);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [eventId]);
 
   useEffect(() => {
-    // Pre-fill form with user data
     if (userProfile) {
       setValue('fullName', userProfile.displayName || '');
       setValue('email', userProfile.email || '');
@@ -82,9 +90,13 @@ const EventRegister = () => {
   };
 
   const formatDate = (timestamp) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'MMM dd, yyyy');
+    if (!timestamp) return '-';
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return format(date, 'MMM dd, yyyy');
+    } catch {
+      return '-';
+    }
   };
 
   const generateRegistrationId = () => {
@@ -104,7 +116,7 @@ const EventRegister = () => {
     });
   };
 
-  const processPayment = async (registrationData) => {
+  const processPayment = async (regData) => {
     const res = await loadRazorpay();
     if (!res) {
       toast.error('Failed to load payment gateway');
@@ -113,23 +125,21 @@ const EventRegister = () => {
 
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_demo',
-      amount: event.fee * 100, // Amount in paise
+      amount: event.fee * 100,
       currency: 'INR',
       name: 'Ventixe Events',
       description: `Registration for ${event.title}`,
       image: '/vite.svg',
       handler: async (response) => {
         try {
-          // Update registration with payment details
-          await updateDoc(doc(db, 'registrations', registrationData.id), {
+          await updateDoc(doc(db, 'registrations', regData.id), {
             paymentStatus: 'completed',
             paymentId: response.razorpay_payment_id,
             paidAt: serverTimestamp(),
           });
 
-          // Create payment record
           await addDoc(collection(db, 'payments'), {
-            registrationId: registrationData.id,
+            registrationId: regData.id,
             eventId: event.id,
             userId: user.uid,
             amount: event.fee,
@@ -139,7 +149,6 @@ const EventRegister = () => {
             createdAt: serverTimestamp(),
           });
 
-          // Update event participant count
           await updateDoc(doc(db, 'events', event.id), {
             currentCount: increment(1),
           });
@@ -152,9 +161,9 @@ const EventRegister = () => {
         }
       },
       prefill: {
-        name: registrationData.fullName,
-        email: registrationData.email,
-        contact: registrationData.mobile,
+        name: regData.fullName,
+        email: regData.email,
+        contact: regData.mobile,
       },
       theme: {
         color: '#1E3A5F',
@@ -166,11 +175,15 @@ const EventRegister = () => {
   };
 
   const onSubmit = async (data) => {
+    if (!agreedToTerms) {
+      toast.error('Please agree to the terms and conditions');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const registrationId = generateRegistrationId();
 
-      // Upload ID proof if provided
       let idProofUrl = null;
       if (idProof) {
         idProofUrl = await uploadFile(
@@ -179,8 +192,7 @@ const EventRegister = () => {
         );
       }
 
-      // Create registration document
-      const registrationData = {
+      const regData = {
         registrationId,
         eventId: event.id,
         eventTitle: event.title,
@@ -196,15 +208,14 @@ const EventRegister = () => {
         createdAt: serverTimestamp(),
       };
 
-      const docRef = await addDoc(collection(db, 'registrations'), registrationData);
-      registrationData.id = docRef.id;
+      const docRef = await addDoc(collection(db, 'registrations'), regData);
+      regData.id = docRef.id;
+      setRegistrationData(regData);
 
       if (event.fee > 0 && event.mandatoryPayment) {
-        // Process payment
         setStep(2);
-        await processPayment(registrationData);
+        await processPayment(regData);
       } else {
-        // Free event or payment not mandatory
         await updateDoc(doc(db, 'events', event.id), {
           currentCount: increment(1),
         });
@@ -219,8 +230,42 @@ const EventRegister = () => {
     }
   };
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB');
+        return;
+      }
+      setIdProof(file);
+    }
+  };
+
+  // Loading state
   if (loading) {
-    return <PageLoader />;
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#F8FAFC',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '3rem',
+            height: '3rem',
+            border: '3px solid #F1F5F9',
+            borderTopColor: '#E91E63',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem',
+          }} />
+          <p style={{ color: '#64748B', margin: 0 }}>Loading...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
   if (!event) {
@@ -230,191 +275,416 @@ const EventRegister = () => {
   // Success Step
   if (step === 3) {
     return (
-      <div className="min-h-screen bg-background py-8">
-        <div className="max-w-2xl mx-auto px-4">
-          <Card className="text-center">
-            <div className="w-16 h-16 bg-success-light rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg className="w-8 h-8 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-text-primary mb-2">
-              Registration Successful!
-            </h1>
-            <p className="text-text-secondary mb-8">
-              You have been registered for {event.title}
-            </p>
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#F8FAFC',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+      }}>
+        <div style={{
+          backgroundColor: '#FFFFFF',
+          borderRadius: '1rem',
+          padding: '2rem',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+          maxWidth: '440px',
+          width: '100%',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: '4rem',
+            height: '4rem',
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            margin: '0 auto 1.25rem',
+          }}>
+            <CheckCircle style={{ width: '2rem', height: '2rem', color: '#FFFFFF' }} />
+          </div>
 
-            {/* QR Code */}
-            <div className="bg-gray-50 rounded-xl p-6 mb-6 inline-block">
-              <QRCodeSVG
-                value={`VENTIXE:${eventId}:${user.uid}`}
-                size={200}
-                level="H"
-                includeMargin
-              />
-            </div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: '0 0 0.5rem' }}>
+            Registration Successful!
+          </h1>
+          <p style={{ color: '#64748B', margin: '0 0 0.25rem', fontSize: '0.9375rem' }}>
+            You have been registered for
+          </p>
+          <p style={{ fontSize: '1rem', fontWeight: '600', color: '#1E3A5F', margin: '0 0 1.5rem' }}>
+            {event.title}
+          </p>
 
-            <p className="text-sm text-text-secondary mb-6">
-              Show this QR code at the venue for entry
-            </p>
+          <div style={{
+            backgroundColor: '#F8FAFC',
+            borderRadius: '0.75rem',
+            padding: '1.25rem',
+            display: 'inline-block',
+            marginBottom: '1rem',
+          }}>
+            <QRCodeSVG
+              value={`VENTIXE:${eventId}:${user?.uid || 'guest'}`}
+              size={160}
+              level="H"
+              includeMargin
+            />
+          </div>
 
-            <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left">
-              <h3 className="font-semibold text-text-primary mb-3">Event Details</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Calendar className="w-4 h-4" />
-                  {formatDate(event.eventDate)}
-                </div>
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Clock className="w-4 h-4" />
-                  {event.startTime} - {event.endTime}
-                </div>
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <MapPin className="w-4 h-4" />
-                  {event.type === 'online' ? 'Online Event' : event.venue}
-                </div>
-              </div>
-            </div>
+          <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0 0 1.25rem' }}>
+            Show this QR code at the venue for entry
+          </p>
 
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                fullWidth
-                onClick={() => navigate('/events')}
-              >
-                Browse More Events
-              </Button>
-              <Button
-                fullWidth
-                onClick={() => window.print()}
-              >
-                Download Entry Pass
-              </Button>
+          <div style={{
+            backgroundColor: '#F8FAFC',
+            borderRadius: '0.75rem',
+            padding: '1rem',
+            textAlign: 'left',
+            marginBottom: '1.25rem',
+          }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.75rem' }}>
+              Event Details
+            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B', marginBottom: '0.5rem' }}>
+              <Calendar style={{ width: '0.875rem', height: '0.875rem', color: '#E91E63' }} />
+              {formatDate(event.eventDate)}
             </div>
-          </Card>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B', marginBottom: '0.5rem' }}>
+              <Clock style={{ width: '0.875rem', height: '0.875rem', color: '#E91E63' }} />
+              {event.startTime} - {event.endTime}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B' }}>
+              <MapPin style={{ width: '0.875rem', height: '0.875rem', color: '#E91E63' }} />
+              {event.type === 'online' ? 'Online Event' : event.venue || 'TBA'}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={() => navigate('/events')}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                backgroundColor: '#FFFFFF',
+                color: '#1E293B',
+                border: '1px solid #E2E8F0',
+                borderRadius: '0.625rem',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              Browse Events
+            </button>
+            <button
+              onClick={() => window.print()}
+              style={{
+                flex: 1,
+                padding: '0.75rem',
+                backgroundColor: '#E91E63',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '0.625rem',
+                fontSize: '0.875rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+              }}
+            >
+              Download Pass
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Input Component
+  const InputField = ({ icon: Icon, label, required, error, ...props }) => (
+    <div style={{ marginBottom: '1rem' }}>
+      <label style={{ display: 'block', marginBottom: '0.375rem', fontSize: '0.8125rem', fontWeight: '500', color: '#1E293B' }}>
+        {label} {required && <span style={{ color: '#EF4444' }}>*</span>}
+      </label>
+      <div style={{ position: 'relative' }}>
+        {Icon && (
+          <Icon style={{
+            position: 'absolute',
+            left: '0.75rem',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '1rem',
+            height: '1rem',
+            color: '#94A3B8',
+          }} />
+        )}
+        <input
+          {...props}
+          style={{
+            width: '100%',
+            padding: '0.625rem 0.875rem',
+            paddingLeft: Icon ? '2.5rem' : '0.875rem',
+            backgroundColor: '#F8FAFC',
+            border: `1px solid ${error ? '#EF4444' : '#E2E8F0'}`,
+            borderRadius: '0.5rem',
+            fontSize: '0.875rem',
+            color: '#1E293B',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
+      </div>
+      {error && <p style={{ fontSize: '0.75rem', color: '#EF4444', marginTop: '0.25rem' }}>{error}</p>}
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-background py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Form */}
-          <div className="lg:col-span-2">
-            <Card>
-              <h1 className="text-2xl font-bold text-text-primary mb-6">
+    <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', padding: '1rem', paddingBottom: '2rem' }}>
+      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
+        {/* Back Button */}
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.375rem',
+            padding: '0.5rem 0.875rem',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            borderRadius: '0.5rem',
+            color: '#64748B',
+            fontSize: '0.8125rem',
+            fontWeight: '500',
+            cursor: 'pointer',
+            marginBottom: '1rem',
+          }}
+        >
+          <ArrowLeft style={{ width: '0.875rem', height: '0.875rem' }} />
+          Back
+        </button>
+
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: '1.25rem',
+        }}>
+          {/* Form Section */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '1rem',
+              padding: '1.25rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}>
+              <h1 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#1E293B', margin: '0 0 1.25rem' }}>
                 Registration Form
               </h1>
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              <form onSubmit={handleSubmit(onSubmit)}>
                 {/* Personal Information */}
-                <div>
-                  <h2 className="text-lg font-semibold text-text-primary mb-4">
-                    Personal Information
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input
-                      label="Full Name"
-                      placeholder="Enter your full name"
-                      icon={User}
-                      required
-                      error={errors.fullName?.message}
-                      {...register('fullName')}
-                    />
-                    <Input
-                      label="Email Address"
-                      type="email"
-                      placeholder="Enter your email"
-                      icon={Mail}
-                      required
-                      error={errors.email?.message}
-                      {...register('email')}
-                    />
-                    <Input
-                      label="Mobile Number"
-                      placeholder="Enter 10-digit mobile"
-                      icon={Phone}
-                      required
-                      error={errors.mobile?.message}
-                      {...register('mobile')}
-                    />
-                    <Input
-                      label="Organization / College"
-                      placeholder="Enter your organization"
-                      icon={Building}
-                      error={errors.organization?.message}
-                      {...register('organization')}
-                    />
-                  </div>
+                <h2 style={{
+                  fontSize: '0.9375rem',
+                  fontWeight: '600',
+                  color: '#1E293B',
+                  margin: '0 0 0.875rem',
+                  paddingBottom: '0.5rem',
+                  borderBottom: '1px solid #F1F5F9',
+                }}>
+                  Personal Information
+                </h2>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                  gap: '0.75rem',
+                }}>
+                  <InputField
+                    icon={User}
+                    label="Full Name"
+                    required
+                    placeholder="Enter your full name"
+                    error={errors.fullName?.message}
+                    {...register('fullName')}
+                  />
+                  <InputField
+                    icon={Mail}
+                    label="Email Address"
+                    required
+                    type="email"
+                    placeholder="Enter your email"
+                    error={errors.email?.message}
+                    {...register('email')}
+                  />
+                  <InputField
+                    icon={Phone}
+                    label="Mobile Number"
+                    required
+                    type="tel"
+                    placeholder="Enter 10-digit mobile"
+                    error={errors.mobile?.message}
+                    {...register('mobile')}
+                  />
+                  <InputField
+                    icon={Building}
+                    label="Organization / College"
+                    placeholder="Enter your organization"
+                    {...register('organization')}
+                  />
                 </div>
 
                 {/* Additional Information */}
-                <div>
-                  <h2 className="text-lg font-semibold text-text-primary mb-4">
-                    Additional Information
-                  </h2>
-                  <div className="space-y-4">
-                    <Textarea
-                      label="Address"
-                      placeholder="Enter your address"
-                      rows={3}
-                      error={errors.address?.message}
-                      {...register('address')}
-                    />
-                    <Input
-                      label="Emergency Contact"
-                      placeholder="Emergency contact number"
-                      icon={Phone}
-                      error={errors.emergencyContact?.message}
-                      {...register('emergencyContact')}
-                    />
-                    <FileUpload
-                      label="ID Proof (Optional)"
-                      accept="image/*,.pdf"
-                      onChange={setIdProof}
-                      value={idProof}
-                      helperText="Upload Aadhar, PAN, or College ID"
-                    />
-                  </div>
+                <h2 style={{
+                  fontSize: '0.9375rem',
+                  fontWeight: '600',
+                  color: '#1E293B',
+                  margin: '1.25rem 0 0.875rem',
+                  paddingBottom: '0.5rem',
+                  borderBottom: '1px solid #F1F5F9',
+                }}>
+                  Additional Information
+                </h2>
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.375rem', fontSize: '0.8125rem', fontWeight: '500', color: '#1E293B' }}>
+                    Address
+                  </label>
+                  <textarea
+                    placeholder="Enter your address"
+                    {...register('address')}
+                    style={{
+                      width: '100%',
+                      padding: '0.625rem 0.875rem',
+                      backgroundColor: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      color: '#1E293B',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      minHeight: '70px',
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+
+                <InputField
+                  icon={Phone}
+                  label="Emergency Contact"
+                  type="tel"
+                  placeholder="Emergency contact number"
+                  {...register('emergencyContact')}
+                />
+
+                {/* File Upload */}
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.375rem', fontSize: '0.8125rem', fontWeight: '500', color: '#1E293B' }}>
+                    ID Proof (Optional)
+                  </label>
+                  {!idProof ? (
+                    <label style={{
+                      display: 'block',
+                      border: '2px dashed #E2E8F0',
+                      borderRadius: '0.5rem',
+                      padding: '1.25rem',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      backgroundColor: '#FAFBFC',
+                    }}>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={handleFileChange}
+                        style={{ display: 'none' }}
+                      />
+                      <Upload style={{ width: '1.5rem', height: '1.5rem', color: '#94A3B8', margin: '0 auto 0.375rem' }} />
+                      <p style={{ margin: '0 0 0.125rem', color: '#1E293B', fontWeight: '500', fontSize: '0.8125rem' }}>
+                        Click to upload
+                      </p>
+                      <p style={{ margin: 0, fontSize: '0.6875rem', color: '#94A3B8' }}>
+                        Aadhar, PAN, or College ID (Max 5MB)
+                      </p>
+                    </label>
+                  ) : (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.625rem 0.875rem',
+                      backgroundColor: '#F0FDF4',
+                      borderRadius: '0.5rem',
+                      border: '1px solid #BBF7D0',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <FileText style={{ width: '1rem', height: '1rem', color: '#10B981' }} />
+                        <span style={{ fontSize: '0.8125rem', color: '#1E293B' }}>{idProof.name}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIdProof(null)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
+                      >
+                        <X style={{ width: '0.875rem', height: '0.875rem', color: '#EF4444' }} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Terms */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <label className="flex items-start gap-3 cursor-pointer">
+                <div style={{
+                  backgroundColor: '#F8FAFC',
+                  borderRadius: '0.5rem',
+                  padding: '0.875rem',
+                  marginBottom: '1rem',
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.625rem', cursor: 'pointer' }}>
                     <input
                       type="checkbox"
-                      required
-                      className="w-4 h-4 mt-1 rounded border-gray-300 text-primary focus:ring-primary"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      style={{ width: '1rem', height: '1rem', marginTop: '0.125rem', accentColor: '#E91E63' }}
                     />
-                    <span className="text-sm text-text-secondary">
+                    <span style={{ fontSize: '0.8125rem', color: '#64748B', lineHeight: 1.5 }}>
                       I agree to the terms and conditions. I understand that my registration
                       is subject to availability and the organizer's approval.
                     </span>
                   </label>
                 </div>
 
-                <Button
+                <button
                   type="submit"
-                  fullWidth
-                  size="lg"
-                  loading={submitting}
-                  icon={event.fee > 0 ? CreditCard : undefined}
+                  disabled={submitting}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '0.875rem',
+                    backgroundColor: '#E91E63',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '0.625rem',
+                    fontSize: '0.9375rem',
+                    fontWeight: '600',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    opacity: submitting ? 0.7 : 1,
+                  }}
                 >
-                  {event.fee > 0
-                    ? `Pay ₹${event.fee} & Register`
-                    : 'Complete Registration'}
-                </Button>
+                  {event.fee > 0 && <CreditCard style={{ width: '1.125rem', height: '1.125rem' }} />}
+                  {submitting ? 'Processing...' : (event.fee > 0 ? `Pay Rs.${event.fee} & Register` : 'Complete Registration')}
+                </button>
               </form>
-            </Card>
+            </div>
           </div>
 
-          {/* Event Summary */}
-          <div>
-            <Card className="sticky top-24">
-              <h2 className="text-lg font-semibold text-text-primary mb-4">
+          {/* Event Summary Sidebar */}
+          <div style={{ width: isMobile ? '100%' : '300px', flexShrink: 0 }}>
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '1rem',
+              padding: '1.25rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              position: isMobile ? 'relative' : 'sticky',
+              top: '1rem',
+            }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', margin: '0 0 1rem' }}>
                 Event Summary
               </h2>
 
@@ -422,62 +692,83 @@ const EventRegister = () => {
                 <img
                   src={event.bannerUrl}
                   alt={event.title}
-                  className="w-full h-32 object-cover rounded-lg mb-4"
+                  style={{
+                    width: '100%',
+                    height: '100px',
+                    objectFit: 'cover',
+                    borderRadius: '0.5rem',
+                    marginBottom: '0.875rem',
+                  }}
                 />
               )}
 
-              <h3 className="font-semibold text-text-primary mb-3">
+              <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.875rem' }}>
                 {event.title}
               </h3>
 
-              <div className="space-y-3 text-sm mb-6">
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Calendar className="w-4 h-4 text-primary" />
-                  {formatDate(event.eventDate)}
-                </div>
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <Clock className="w-4 h-4 text-primary" />
-                  {event.startTime} - {event.endTime}
-                </div>
-                <div className="flex items-center gap-2 text-text-secondary">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  {event.type === 'online' ? 'Online Event' : event.venue || 'TBA'}
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B', marginBottom: '0.5rem' }}>
+                <Calendar style={{ width: '0.875rem', height: '0.875rem', color: '#E91E63' }} />
+                {formatDate(event.eventDate)}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B', marginBottom: '0.5rem' }}>
+                <Clock style={{ width: '0.875rem', height: '0.875rem', color: '#E91E63' }} />
+                {event.startTime} - {event.endTime}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B', marginBottom: '1rem' }}>
+                <MapPin style={{ width: '0.875rem', height: '0.875rem', color: '#E91E63' }} />
+                {event.type === 'online' ? 'Online Event' : event.venue || 'TBA'}
               </div>
 
-              <div className="border-t border-gray-100 pt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-text-secondary">Registration Fee</span>
-                  <span className="font-semibold text-text-primary">
-                    {event.fee > 0 ? `₹${event.fee}` : 'Free'}
+              <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '0.875rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                  <span style={{ color: '#64748B', fontSize: '0.8125rem' }}>Registration Fee</span>
+                  <span style={{ fontWeight: '600', color: '#1E293B', fontSize: '0.875rem' }}>
+                    {event.fee > 0 ? `Rs.${event.fee}` : 'Free'}
                   </span>
                 </div>
+
                 {event.fee > 0 && (
                   <>
-                    <div className="flex items-center justify-between mb-2 text-sm">
-                      <span className="text-text-secondary">Convenience Fee</span>
-                      <span className="text-text-primary">₹0</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                      <span style={{ color: '#64748B', fontSize: '0.75rem' }}>Convenience Fee</span>
+                      <span style={{ color: '#1E293B', fontSize: '0.8125rem' }}>Rs.0</span>
                     </div>
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                      <span className="font-semibold text-text-primary">Total</span>
-                      <span className="font-bold text-xl text-primary">₹{event.fee}</span>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingTop: '0.625rem',
+                      borderTop: '1px solid #E2E8F0',
+                    }}>
+                      <span style={{ fontWeight: '600', color: '#1E293B', fontSize: '0.875rem' }}>Total</span>
+                      <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#E91E63' }}>
+                        Rs.{event.fee}
+                      </span>
                     </div>
                   </>
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <div className="flex items-start gap-2 text-xs text-text-secondary">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>
-                    Registration is non-refundable. Please ensure all details are correct before submitting.
-                  </span>
-                </div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '0.375rem',
+                marginTop: '0.875rem',
+                padding: '0.625rem',
+                backgroundColor: '#FEF3C7',
+                borderRadius: '0.375rem',
+                fontSize: '0.6875rem',
+                color: '#92400E',
+              }}>
+                <AlertCircle style={{ width: '0.875rem', height: '0.875rem', flexShrink: 0, marginTop: '1px' }} />
+                <span>Registration is non-refundable. Please ensure all details are correct.</span>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

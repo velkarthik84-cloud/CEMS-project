@@ -16,10 +16,13 @@ import {
   Save,
   ArrowLeft,
   Upload,
-  X
+  X,
+  UserCheck,
+  Plus,
+  Trash2,
+  Eye,
+  EyeOff
 } from 'lucide-react';
-import Button from '../../components/common/Button';
-import Input from '../../components/common/Input';
 import { EventQRModal } from '../../components/common';
 import { EVENT_CATEGORIES, EVENT_TYPES } from '../../utils/constants';
 import toast from 'react-hot-toast';
@@ -49,6 +52,10 @@ const CreateEvent = () => {
   const [isFree, setIsFree] = useState(true);
   const [mandatoryPayment, setMandatoryPayment] = useState(true);
   const [qrModal, setQrModal] = useState({ open: false, eventId: null, eventTitle: '' });
+
+  // Judges state
+  const [judges, setJudges] = useState([]);
+  const [showPassword, setShowPassword] = useState({});
 
   const {
     register,
@@ -80,6 +87,41 @@ const CreateEvent = () => {
     navigate('/admin/events');
   };
 
+  // Judge functions
+  const addJudge = () => {
+    const newJudge = {
+      id: Date.now(),
+      name: '',
+      username: '',
+      password: '',
+      email: '',
+    };
+    setJudges([...judges, newJudge]);
+  };
+
+  const updateJudge = (id, field, value) => {
+    setJudges(judges.map(judge =>
+      judge.id === id ? { ...judge, [field]: value } : judge
+    ));
+  };
+
+  const removeJudge = (id) => {
+    setJudges(judges.filter(judge => judge.id !== id));
+  };
+
+  const generatePassword = (id) => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    updateJudge(id, 'password', password);
+  };
+
+  const togglePasswordVisibility = (id) => {
+    setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const onSubmit = async (data) => {
     setLoading(true);
     try {
@@ -87,6 +129,9 @@ const CreateEvent = () => {
       if (bannerImage) {
         bannerUrl = await uploadFile(bannerImage, `events/banners/${Date.now()}-${bannerImage.name}`);
       }
+
+      // Validate judges
+      const validJudges = judges.filter(j => j.name && j.username && j.password);
 
       const eventData = {
         title: data.title,
@@ -106,6 +151,13 @@ const CreateEvent = () => {
         fee: isFree ? 0 : parseFloat(data.fee) || 0,
         isFree,
         mandatoryPayment: !isFree && mandatoryPayment,
+        judges: validJudges.map(j => ({
+          id: j.id.toString(),
+          name: j.name,
+          username: j.username,
+          password: j.password,
+          email: j.email || '',
+        })),
         status: 'draft',
         createdBy: user.uid,
         createdAt: serverTimestamp(),
@@ -124,45 +176,29 @@ const CreateEvent = () => {
   };
 
   // Styles
-  const containerStyle = { maxWidth: '56rem', margin: '0 auto', width: '100%' };
-  const headerStyle = { display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' };
-  const backBtnStyle = {
-    padding: '0.5rem',
-    borderRadius: '0.5rem',
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-  };
-  const titleStyle = { fontSize: '1.5rem', fontWeight: 'bold', color: '#1E3A5F' };
-  const subtitleStyle = { color: '#64748B', fontSize: '0.875rem' };
-  const formStyle = { display: 'flex', flexDirection: 'column', gap: '1.5rem' };
-
   const cardStyle = {
     backgroundColor: '#FFFFFF',
-    borderRadius: '1rem',
+    borderRadius: '0.875rem',
     padding: '1.5rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
   };
 
   const sectionTitleStyle = {
-    fontSize: '1.125rem',
+    fontSize: '1rem',
     fontWeight: '600',
-    color: '#1E3A5F',
-    marginBottom: '1rem',
+    color: '#1E293B',
+    marginBottom: '1.25rem',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
   };
-
-  const inputGroupStyle = { display: 'flex', flexDirection: 'column', gap: '1rem' };
-  const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' };
 
   const labelStyle = {
     display: 'block',
     marginBottom: '0.5rem',
     fontSize: '0.875rem',
     fontWeight: '500',
-    color: '#1E3A5F',
+    color: '#1E293B',
   };
 
   const inputStyle = {
@@ -172,6 +208,7 @@ const CreateEvent = () => {
     border: '1px solid #E2E8F0',
     backgroundColor: '#F8FAFC',
     fontSize: '0.875rem',
+    color: '#1E293B',
     outline: 'none',
   };
 
@@ -185,6 +222,7 @@ const CreateEvent = () => {
   const selectStyle = {
     ...inputStyle,
     cursor: 'pointer',
+    appearance: 'none',
   };
 
   const errorStyle = {
@@ -203,10 +241,10 @@ const CreateEvent = () => {
   };
 
   const toggleBtnStyle = (active) => ({
-    width: '3rem',
+    width: '2.75rem',
     height: '1.5rem',
     borderRadius: '9999px',
-    backgroundColor: active ? '#1E3A5F' : '#CBD5E1',
+    backgroundColor: active ? '#E91E63' : '#CBD5E1',
     border: 'none',
     cursor: 'pointer',
     position: 'relative',
@@ -225,54 +263,70 @@ const CreateEvent = () => {
     boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
   });
 
-  const uploadAreaStyle = {
-    border: '2px dashed #E2E8F0',
-    borderRadius: '0.75rem',
-    padding: '2rem',
-    textAlign: 'center',
-    cursor: 'pointer',
-    transition: 'border-color 0.2s ease',
-    backgroundColor: '#FAFBFC',
-  };
-
-  const previewStyle = {
-    position: 'relative',
-    borderRadius: '0.75rem',
-    overflow: 'hidden',
-  };
-
-  const actionsStyle = {
+  const buttonStyle = {
     display: 'flex',
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: '1rem',
-    paddingTop: '1rem',
+    justifyContent: 'center',
+    gap: '0.5rem',
+    padding: '0.75rem 1.5rem',
+    borderRadius: '0.5rem',
+    fontSize: '0.875rem',
+    fontWeight: '500',
+    cursor: 'pointer',
+    border: 'none',
+  };
+
+  const primaryButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#E91E63',
+    color: '#FFFFFF',
+  };
+
+  const outlineButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#FFFFFF',
+    color: '#64748B',
+    border: '1px solid #E2E8F0',
+  };
+
+  const judgeCardStyle = {
+    padding: '1.25rem',
+    backgroundColor: '#F8FAFC',
+    borderRadius: '0.75rem',
+    marginBottom: '1rem',
+    border: '1px solid #E2E8F0',
   };
 
   return (
-    <div style={containerStyle}>
+    <div style={{ maxWidth: '56rem', margin: '0 auto', width: '100%' }}>
       {/* Header */}
-      <div style={headerStyle}>
-        <button style={backBtnStyle} onClick={() => navigate(-1)}
-          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            padding: '0.5rem',
+            borderRadius: '0.5rem',
+            backgroundColor: '#FFFFFF',
+            border: '1px solid #E2E8F0',
+            cursor: 'pointer',
+          }}
         >
           <ArrowLeft style={{ width: '1.25rem', height: '1.25rem', color: '#64748B' }} />
         </button>
         <div>
-          <h1 style={titleStyle}>Create New Event</h1>
-          <p style={subtitleStyle}>Fill in the details to create a new event</p>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>Create New Event</h1>
+          <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem' }}>Fill in the details to create a new event</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} style={formStyle}>
+      <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Basic Information */}
         <div style={cardStyle}>
           <h2 style={sectionTitleStyle}>
-            <Calendar style={{ width: '1.25rem', height: '1.25rem', color: '#1E3A5F' }} />
+            <Calendar style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
             Basic Information
           </h2>
-          <div style={inputGroupStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={labelStyle}>Event Title *</label>
               <input
@@ -292,7 +346,7 @@ const CreateEvent = () => {
               />
               {errors.description && <p style={errorStyle}>{errors.description.message}</p>}
             </div>
-            <div style={gridStyle}>
+            <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
               <div>
                 <label style={labelStyle}>Event Category *</label>
                 <select style={selectStyle} {...register('category')}>
@@ -319,7 +373,7 @@ const CreateEvent = () => {
         {/* Location */}
         <div style={cardStyle}>
           <h2 style={sectionTitleStyle}>
-            <MapPin style={{ width: '1.25rem', height: '1.25rem', color: '#1E3A5F' }} />
+            <MapPin style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
             {watchType === 'online' ? 'Meeting Details' : 'Venue Details'}
           </h2>
           {watchType === 'online' ? (
@@ -352,10 +406,10 @@ const CreateEvent = () => {
         {/* Schedule */}
         <div style={cardStyle}>
           <h2 style={sectionTitleStyle}>
-            <Clock style={{ width: '1.25rem', height: '1.25rem', color: '#1E3A5F' }} />
+            <Clock style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
             Schedule
           </h2>
-          <div style={{ ...gridStyle, gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: '1rem' }}>
             <div>
               <label style={labelStyle}>Event Date *</label>
               <input type="date" style={inputStyle} {...register('eventDate')} />
@@ -372,7 +426,7 @@ const CreateEvent = () => {
               {errors.endTime && <p style={errorStyle}>{errors.endTime.message}</p>}
             </div>
           </div>
-          <div style={{ ...gridStyle, marginTop: '1rem' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem', marginTop: '1rem' }}>
             <div>
               <label style={labelStyle}>Registration Opens *</label>
               <input type="date" style={inputStyle} {...register('registrationStart')} />
@@ -389,10 +443,10 @@ const CreateEvent = () => {
         {/* Capacity & Pricing */}
         <div style={cardStyle}>
           <h2 style={sectionTitleStyle}>
-            <Users style={{ width: '1.25rem', height: '1.25rem', color: '#1E3A5F' }} />
+            <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
             Capacity & Pricing
           </h2>
-          <div style={inputGroupStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={labelStyle}>Maximum Participants *</label>
               <input
@@ -406,8 +460,8 @@ const CreateEvent = () => {
 
             <div style={toggleBoxStyle}>
               <div>
-                <p style={{ fontWeight: '500', color: '#1E3A5F' }}>Free Event</p>
-                <p style={{ fontSize: '0.875rem', color: '#64748B' }}>
+                <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Free Event</p>
+                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
                   Toggle off to set a registration fee
                 </p>
               </div>
@@ -429,12 +483,11 @@ const CreateEvent = () => {
                       {...register('fee')}
                     />
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: '#64748B', marginTop: '0.25rem' }}>Amount in INR</p>
                 </div>
                 <div style={toggleBoxStyle}>
                   <div>
-                    <p style={{ fontWeight: '500', color: '#1E3A5F' }}>Mandatory Payment</p>
-                    <p style={{ fontSize: '0.875rem', color: '#64748B' }}>
+                    <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Mandatory Payment</p>
+                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
                       Require payment before confirming registration
                     </p>
                   </div>
@@ -447,22 +500,171 @@ const CreateEvent = () => {
           </div>
         </div>
 
+        {/* Judges Section */}
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>
+              <UserCheck style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Event Judges
+            </h2>
+            <button
+              type="button"
+              onClick={addJudge}
+              style={{
+                ...outlineButtonStyle,
+                padding: '0.5rem 1rem',
+                fontSize: '0.8125rem',
+              }}
+            >
+              <Plus style={{ width: '1rem', height: '1rem' }} />
+              Add Judge
+            </button>
+          </div>
+
+          {judges.length === 0 ? (
+            <div style={{
+              padding: '2rem',
+              textAlign: 'center',
+              backgroundColor: '#F8FAFC',
+              borderRadius: '0.75rem',
+              border: '2px dashed #E2E8F0',
+            }}>
+              <UserCheck style={{ width: '2.5rem', height: '2.5rem', color: '#CBD5E1', margin: '0 auto 0.75rem' }} />
+              <p style={{ fontSize: '0.875rem', color: '#64748B', margin: 0 }}>
+                No judges added yet. Click "Add Judge" to add judges for this event.
+              </p>
+              <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.5rem' }}>
+                Judges can login to score participants using their credentials.
+              </p>
+            </div>
+          ) : (
+            <div>
+              {judges.map((judge, index) => (
+                <div key={judge.id} style={judgeCardStyle}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B' }}>
+                      Judge {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeJudge(judge.id)}
+                      style={{
+                        padding: '0.375rem',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        border: 'none',
+                        borderRadius: '0.375rem',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Trash2 style={{ width: '1rem', height: '1rem', color: '#EF4444' }} />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '1rem' }}>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Judge Name *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter judge name"
+                        value={judge.name}
+                        onChange={(e) => updateJudge(judge.id, 'name', e.target.value)}
+                        style={{ ...inputStyle, backgroundColor: '#FFFFFF' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Email (Optional)</label>
+                      <input
+                        type="email"
+                        placeholder="judge@email.com"
+                        value={judge.email}
+                        onChange={(e) => updateJudge(judge.id, 'email', e.target.value)}
+                        style={{ ...inputStyle, backgroundColor: '#FFFFFF' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Username *</label>
+                      <input
+                        type="text"
+                        placeholder="judge_username"
+                        value={judge.username}
+                        onChange={(e) => updateJudge(judge.id, 'username', e.target.value.toLowerCase().replace(/\s/g, '_'))}
+                        style={{ ...inputStyle, backgroundColor: '#FFFFFF' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.8125rem' }}>Password *</label>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <div style={{ position: 'relative', flex: 1 }}>
+                          <input
+                            type={showPassword[judge.id] ? 'text' : 'password'}
+                            placeholder="Enter password"
+                            value={judge.password}
+                            onChange={(e) => updateJudge(judge.id, 'password', e.target.value)}
+                            style={{ ...inputStyle, backgroundColor: '#FFFFFF', paddingRight: '2.5rem' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => togglePasswordVisibility(judge.id)}
+                            style={{
+                              position: 'absolute',
+                              right: '0.75rem',
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                              background: 'none',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 0,
+                            }}
+                          >
+                            {showPassword[judge.id] ? (
+                              <EyeOff style={{ width: '1rem', height: '1rem', color: '#64748B' }} />
+                            ) : (
+                              <Eye style={{ width: '1rem', height: '1rem', color: '#64748B' }} />
+                            )}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => generatePassword(judge.id)}
+                          style={{
+                            padding: '0.75rem',
+                            backgroundColor: '#E91E63',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            borderRadius: '0.5rem',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: '500',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          Generate
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Banner Image */}
         <div style={cardStyle}>
           <h2 style={sectionTitleStyle}>
-            <ImageIcon style={{ width: '1.25rem', height: '1.25rem', color: '#1E3A5F' }} />
+            <ImageIcon style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
             Event Banner
           </h2>
           {bannerPreview ? (
-            <div style={previewStyle}>
+            <div style={{ position: 'relative', borderRadius: '0.75rem', overflow: 'hidden' }}>
               <img src={bannerPreview} alt="Banner preview" style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
               <button
                 type="button"
                 onClick={() => { setBannerImage(null); setBannerPreview(null); }}
                 style={{
                   position: 'absolute',
-                  top: '0.5rem',
-                  right: '0.5rem',
+                  top: '0.75rem',
+                  right: '0.75rem',
                   padding: '0.5rem',
                   backgroundColor: '#EF4444',
                   color: '#FFFFFF',
@@ -475,28 +677,37 @@ const CreateEvent = () => {
               </button>
             </div>
           ) : (
-            <label style={uploadAreaStyle}>
+            <label style={{
+              display: 'block',
+              border: '2px dashed #E2E8F0',
+              borderRadius: '0.75rem',
+              padding: '2rem',
+              textAlign: 'center',
+              cursor: 'pointer',
+              backgroundColor: '#FAFBFC',
+            }}>
               <input
                 type="file"
                 accept="image/*"
                 onChange={handleImageChange}
                 style={{ display: 'none' }}
               />
-              <Upload style={{ width: '2.5rem', height: '2.5rem', color: '#64748B', margin: '0 auto 0.5rem' }} />
-              <p style={{ fontWeight: '500', color: '#1E3A5F' }}>Click to upload banner image</p>
-              <p style={{ fontSize: '0.875rem', color: '#64748B' }}>Recommended size: 1200x600px. Max 5MB.</p>
+              <Upload style={{ width: '2.5rem', height: '2.5rem', color: '#94A3B8', margin: '0 auto 0.75rem' }} />
+              <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Click to upload banner image</p>
+              <p style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '0.25rem' }}>Recommended size: 1200x600px. Max 5MB.</p>
             </label>
           )}
         </div>
 
         {/* Actions */}
-        <div style={actionsStyle}>
-          <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem', paddingTop: '0.5rem' }}>
+          <button type="button" onClick={() => navigate(-1)} style={outlineButtonStyle}>
             Cancel
-          </Button>
-          <Button type="submit" variant="primary" loading={loading} icon={Save}>
-            Create Event
-          </Button>
+          </button>
+          <button type="submit" disabled={loading} style={{ ...primaryButtonStyle, opacity: loading ? 0.7 : 1 }}>
+            <Save style={{ width: '1rem', height: '1rem' }} />
+            {loading ? 'Creating...' : 'Create Event'}
+          </button>
         </div>
       </form>
 

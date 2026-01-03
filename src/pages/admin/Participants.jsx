@@ -283,8 +283,8 @@ const Participants = () => {
 
       {/* Filters */}
       <div style={cardStyle}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ maxWidth: '24rem', minWidth: '200px', position: 'relative' }}>
             <Search style={{
               position: 'absolute',
               left: '0.75rem',
@@ -302,49 +302,51 @@ const Participants = () => {
               style={inputStyle}
             />
           </div>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={eventFilter}
-              onChange={(e) => setEventFilter(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">All Events</option>
-              {events.map(event => (
-                <option key={event.value} value={event.value}>{event.label}</option>
-              ))}
-            </select>
-            <ChevronDown style={{
-              position: 'absolute',
-              right: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '1rem',
-              height: '1rem',
-              color: '#94A3B8',
-              pointerEvents: 'none',
-            }} />
-          </div>
-          <div style={{ position: 'relative' }}>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              style={selectStyle}
-            >
-              <option value="">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
-              <option value="failed">Failed</option>
-            </select>
-            <ChevronDown style={{
-              position: 'absolute',
-              right: '0.75rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: '1rem',
-              height: '1rem',
-              color: '#94A3B8',
-              pointerEvents: 'none',
-            }} />
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={eventFilter}
+                onChange={(e) => setEventFilter(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">All Events</option>
+                {events.map(event => (
+                  <option key={event.value} value={event.value}>{event.label}</option>
+                ))}
+              </select>
+              <ChevronDown style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '1rem',
+                height: '1rem',
+                color: '#94A3B8',
+                pointerEvents: 'none',
+              }} />
+            </div>
+            <div style={{ position: 'relative' }}>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+              </select>
+              <ChevronDown style={{
+                position: 'absolute',
+                right: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: '1rem',
+                height: '1rem',
+                color: '#94A3B8',
+                pointerEvents: 'none',
+              }} />
+            </div>
           </div>
         </div>
       </div>

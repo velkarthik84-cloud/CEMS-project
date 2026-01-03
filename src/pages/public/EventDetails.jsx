@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Calendar,
   Clock,
@@ -9,13 +9,15 @@ import {
   Heart,
   ExternalLink,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft,
+  Tag,
+  Globe,
+  Building
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
-import { Button, Card, Badge } from '../../components/common';
-import { PageLoader } from '../../components/common/Loading';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
 
@@ -25,9 +27,14 @@ const EventDetails = () => {
   const { user } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 900);
 
   useEffect(() => {
     fetchEvent();
+    const handleResize = () => setIsMobile(window.innerWidth < 900);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [eventId]);
 
   const fetchEvent = async () => {
@@ -48,16 +55,14 @@ const EventDetails = () => {
     }
   };
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'EEEE, MMMM dd, yyyy');
-  };
-
   const formatShortDate = (timestamp) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'MMM dd, yyyy');
+    if (!timestamp) return '-';
+    try {
+      const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      return format(date, 'MMM dd, yyyy');
+    } catch {
+      return '-';
+    }
   };
 
   const handleShare = () => {
@@ -84,262 +89,533 @@ const EventDetails = () => {
 
   const isRegistrationOpen = () => {
     if (!event) return false;
-    const now = new Date();
-    const regStart = event.registrationStart?.toDate?.() || new Date(event.registrationStart);
-    const regEnd = event.registrationEnd?.toDate?.() || new Date(event.registrationEnd);
-    return now >= regStart && now <= regEnd;
+    try {
+      const now = new Date();
+      const regStart = event.registrationStart?.toDate?.() || new Date(event.registrationStart);
+      const regEnd = event.registrationEnd?.toDate?.() || new Date(event.registrationEnd);
+      return now >= regStart && now <= regEnd;
+    } catch {
+      return true;
+    }
   };
 
   const isFull = () => {
     if (!event) return false;
-    return event.currentCount >= event.maxParticipants;
+    return (event.currentCount || 0) >= (event.maxParticipants || 100);
   };
 
+  const getProgressPercentage = () => {
+    if (!event || !event.maxParticipants) return 0;
+    return Math.min(100, ((event.currentCount || 0) / event.maxParticipants) * 100);
+  };
+
+  // Loading state
   if (loading) {
-    return <PageLoader />;
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#F8FAFC',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '3rem',
+            height: '3rem',
+            border: '3px solid #F1F5F9',
+            borderTopColor: '#E91E63',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 1rem',
+          }} />
+          <p style={{ color: '#64748B', margin: 0 }}>Loading event details...</p>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
   if (!event) {
     return null;
   }
 
+  // Info Card Component
+  const InfoCard = ({ icon: Icon, label, value, color }) => (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      padding: '1rem',
+      backgroundColor: '#F8FAFC',
+      borderRadius: '0.75rem',
+    }}>
+      <div style={{
+        width: '2.5rem',
+        height: '2.5rem',
+        backgroundColor: `${color}15`,
+        borderRadius: '0.625rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <Icon style={{ width: '1.125rem', height: '1.125rem', color }} />
+      </div>
+      <div style={{ overflow: 'hidden' }}>
+        <p style={{ fontSize: '0.75rem', color: '#64748B', margin: 0 }}>{label}</p>
+        <p style={{
+          fontSize: '0.875rem',
+          fontWeight: '600',
+          color: '#1E293B',
+          margin: 0,
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>{value}</p>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', paddingBottom: '2rem' }}>
       {/* Banner */}
-      <div className="relative h-64 md:h-80 lg:h-96 overflow-hidden">
+      <div style={{
+        position: 'relative',
+        height: '300px',
+        overflow: 'hidden',
+      }}>
         {event.bannerUrl ? (
           <img
             src={event.bannerUrl}
             alt={event.title}
-            className="w-full h-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary to-primary-dark" />
+          <div style={{
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(135deg, #1E3A5F 0%, #E91E63 100%)',
+          }} />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-wrap gap-2 mb-4">
-              <Badge variant="primary">{event.category}</Badge>
-              <Badge variant={event.type === 'online' ? 'info' : 'success'}>
-                {event.type === 'online' ? 'Online Event' : 'Offline Event'}
-              </Badge>
-              {event.status === 'published' && (
-                <Badge variant="success" dot>Live</Badge>
-              )}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.1) 100%)',
+        }} />
+
+        {/* Back Button */}
+        <button
+          onClick={() => navigate('/events')}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            left: '1rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 1rem',
+            backgroundColor: '#FFFFFF',
+            border: 'none',
+            borderRadius: '0.5rem',
+            color: '#1E293B',
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            zIndex: 10,
+          }}
+        >
+          <ArrowLeft style={{ width: '1rem', height: '1rem' }} />
+          Back
+        </button>
+
+        {/* Banner Content */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: '1.5rem',
+        }}>
+          <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.75rem' }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                backgroundColor: '#E91E63',
+                color: '#FFFFFF',
+              }}>
+                <Tag style={{ width: '0.75rem', height: '0.75rem' }} />
+                {event.category || 'Event'}
+              </span>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                backgroundColor: event.type === 'online' ? '#3B82F6' : '#10B981',
+                color: '#FFFFFF',
+              }}>
+                {event.type === 'online' ? (
+                  <><Globe style={{ width: '0.75rem', height: '0.75rem' }} /> Online</>
+                ) : (
+                  <><Building style={{ width: '0.75rem', height: '0.75rem' }} /> Offline</>
+                )}
+              </span>
             </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
-              {event.title}
-            </h1>
+            <h1 style={{
+              fontSize: isMobile ? '1.5rem' : '1.75rem',
+              fontWeight: '700',
+              color: '#FFFFFF',
+              margin: 0,
+              lineHeight: 1.3,
+            }}>{event.title}</h1>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 relative">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div style={{
+        maxWidth: '1100px',
+        margin: '0 auto',
+        padding: '1.5rem 1rem',
+      }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: '1.5rem',
+        }}>
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Quick Info */}
-            <Card>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">Date</p>
-                    <p className="font-medium text-text-primary">{formatShortDate(event.eventDate)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">Time</p>
-                    <p className="font-medium text-text-primary">{event.startTime} - {event.endTime}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">Location</p>
-                    <p className="font-medium text-text-primary">
-                      {event.type === 'online' ? 'Online' : event.venue || 'TBA'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <Users className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-text-secondary">Capacity</p>
-                    <p className="font-medium text-text-primary">
-                      {event.currentCount || 0}/{event.maxParticipants}
-                    </p>
-                  </div>
-                </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Quick Info Grid */}
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '1rem',
+              padding: '1rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              marginBottom: '1.5rem',
+            }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                gap: '0.75rem',
+              }}>
+                <InfoCard
+                  icon={Calendar}
+                  label="Date"
+                  value={formatShortDate(event.eventDate)}
+                  color="#E91E63"
+                />
+                <InfoCard
+                  icon={Clock}
+                  label="Time"
+                  value={`${event.startTime || '-'} - ${event.endTime || '-'}`}
+                  color="#8B5CF6"
+                />
+                <InfoCard
+                  icon={MapPin}
+                  label="Location"
+                  value={event.type === 'online' ? 'Online Event' : (event.venue || 'TBA')}
+                  color="#3B82F6"
+                />
+                <InfoCard
+                  icon={Users}
+                  label="Capacity"
+                  value={`${event.currentCount || 0} / ${event.maxParticipants || '-'}`}
+                  color="#10B981"
+                />
               </div>
-            </Card>
+            </div>
 
-            {/* Description */}
-            <Card>
-              <h2 className="text-xl font-semibold text-text-primary mb-4">About This Event</h2>
-              <div className="prose prose-sm max-w-none text-text-secondary">
-                {event.description?.split('\n').map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
-            </Card>
-
-            {/* Additional Details */}
-            {(event.venue || event.type === 'online') && (
-              <Card>
-                <h2 className="text-xl font-semibold text-text-primary mb-4">
-                  {event.type === 'online' ? 'How to Join' : 'Venue Details'}
-                </h2>
-                {event.type === 'online' ? (
-                  <div className="space-y-3">
-                    <p className="text-text-secondary">
-                      This is an online event. Meeting link will be shared with registered participants.
+            {/* About Section */}
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '1rem',
+              padding: '1.5rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              marginBottom: '1.5rem',
+            }}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1E293B', margin: '0 0 1rem' }}>
+                About This Event
+              </h2>
+              <div style={{ fontSize: '0.9375rem', color: '#64748B', lineHeight: 1.7 }}>
+                {event.description ? (
+                  event.description.split('\n').map((paragraph, index) => (
+                    <p key={index} style={{ margin: index === 0 ? 0 : '0.75rem 0 0' }}>
+                      {paragraph}
                     </p>
-                    <div className="flex items-center gap-2 text-primary">
-                      <ExternalLink className="w-4 h-4" />
-                      <span className="text-sm">Link will be available after registration</span>
-                    </div>
-                  </div>
+                  ))
                 ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="font-medium text-text-primary">{event.venue}</p>
-                        {event.venueAddress && (
-                          <p className="text-sm text-text-secondary">{event.venueAddress}</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <p style={{ margin: 0, fontStyle: 'italic' }}>No description available.</p>
                 )}
-              </Card>
-            )}
+              </div>
+            </div>
+
+            {/* Venue/Join Section */}
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '1rem',
+              padding: '1.5rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}>
+              <h2 style={{ fontSize: '1.125rem', fontWeight: '700', color: '#1E293B', margin: '0 0 1rem' }}>
+                {event.type === 'online' ? 'How to Join' : 'Venue Details'}
+              </h2>
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '1rem',
+                padding: '1rem',
+                backgroundColor: '#F8FAFC',
+                borderRadius: '0.75rem',
+              }}>
+                <div style={{
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  backgroundColor: event.type === 'online' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(233, 30, 99, 0.1)',
+                  borderRadius: '0.625rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  {event.type === 'online' ? (
+                    <ExternalLink style={{ width: '1.125rem', height: '1.125rem', color: '#3B82F6' }} />
+                  ) : (
+                    <MapPin style={{ width: '1.125rem', height: '1.125rem', color: '#E91E63' }} />
+                  )}
+                </div>
+                <div>
+                  {event.type === 'online' ? (
+                    <>
+                      <p style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.25rem' }}>
+                        Online Event
+                      </p>
+                      <p style={{ fontSize: '0.875rem', color: '#64748B', margin: 0, lineHeight: 1.5 }}>
+                        Meeting link will be shared with registered participants via email.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.25rem' }}>
+                        {event.venue || 'Venue TBA'}
+                      </p>
+                      {event.venueAddress && (
+                        <p style={{ fontSize: '0.875rem', color: '#64748B', margin: 0 }}>
+                          {event.venueAddress}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Registration Card */}
-            <Card className="sticky top-24">
-              <div className="text-center mb-6">
+          <div style={{ width: isMobile ? '100%' : '340px', flexShrink: 0 }}>
+            <div style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: '1rem',
+              padding: '1.5rem',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              position: isMobile ? 'relative' : 'sticky',
+              top: '1rem',
+            }}>
+              {/* Price */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '1.25rem',
+                paddingBottom: '1.25rem',
+                borderBottom: '1px solid #F1F5F9',
+              }}>
                 {event.fee > 0 ? (
-                  <div>
-                    <span className="text-4xl font-bold text-text-primary">₹{event.fee}</span>
-                    <span className="text-text-secondary">/person</span>
-                  </div>
+                  <p style={{ fontSize: '2rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                    Rs.{event.fee}
+                    <span style={{ fontSize: '0.875rem', color: '#64748B', fontWeight: '400' }}>/person</span>
+                  </p>
                 ) : (
-                  <div className="text-2xl font-bold text-success">Free Event</div>
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '0.5rem 1.25rem',
+                    backgroundColor: '#ECFDF5',
+                    color: '#059669',
+                    borderRadius: '2rem',
+                    fontSize: '1.125rem',
+                    fontWeight: '700',
+                  }}>Free Event</span>
                 )}
               </div>
 
-              {/* Registration Status */}
-              <div className="space-y-4 mb-6">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary">Registration Opens</span>
-                  <span className="font-medium text-text-primary">
+              {/* Registration Info */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8125rem', color: '#64748B' }}>Registration Opens</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B' }}>
                     {formatShortDate(event.registrationStart)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary">Registration Closes</span>
-                  <span className="font-medium text-text-primary">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8125rem', color: '#64748B' }}>Registration Closes</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B' }}>
                     {formatShortDate(event.registrationEnd)}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-text-secondary">Spots Available</span>
-                  <span className="font-medium text-text-primary">
-                    {event.maxParticipants - (event.currentCount || 0)} left
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8125rem', color: '#64748B' }}>Spots Available</span>
+                  <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#E91E63' }}>
+                    {(event.maxParticipants || 0) - (event.currentCount || 0)} left
                   </span>
                 </div>
+              </div>
 
-                {/* Progress Bar */}
-                <div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-300"
-                      style={{
-                        width: `${((event.currentCount || 0) / event.maxParticipants) * 100}%`
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-text-secondary mt-1 text-center">
-                    {event.currentCount || 0} of {event.maxParticipants} spots filled
-                  </p>
+              {/* Progress Bar */}
+              <div style={{ marginBottom: '1.25rem' }}>
+                <div style={{
+                  height: '6px',
+                  backgroundColor: '#F1F5F9',
+                  borderRadius: '3px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    backgroundColor: '#E91E63',
+                    borderRadius: '3px',
+                    width: `${getProgressPercentage()}%`,
+                  }} />
                 </div>
+                <p style={{ fontSize: '0.75rem', color: '#64748B', textAlign: 'center', marginTop: '0.5rem' }}>
+                  {event.currentCount || 0} of {event.maxParticipants || 0} spots filled
+                </p>
               </div>
 
               {/* Registration Button */}
               {isFull() ? (
-                <div className="bg-error-light rounded-lg p-4 text-center">
-                  <AlertCircle className="w-6 h-6 text-error mx-auto mb-2" />
-                  <p className="font-medium text-error">Registration Full</p>
-                  <p className="text-sm text-error/70">No spots available</p>
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: '0.75rem',
+                  textAlign: 'center',
+                  backgroundColor: '#FEF2F2',
+                  border: '1px solid #FECACA',
+                }}>
+                  <AlertCircle style={{ width: '1.5rem', height: '1.5rem', color: '#EF4444', marginBottom: '0.25rem' }} />
+                  <p style={{ fontWeight: '600', color: '#EF4444', margin: 0, fontSize: '0.9375rem' }}>Registration Full</p>
                 </div>
               ) : !isRegistrationOpen() ? (
-                <div className="bg-warning-light rounded-lg p-4 text-center">
-                  <AlertCircle className="w-6 h-6 text-warning mx-auto mb-2" />
-                  <p className="font-medium text-yellow-700">Registration Closed</p>
-                  <p className="text-sm text-yellow-600">Check back later</p>
+                <div style={{
+                  padding: '1rem',
+                  borderRadius: '0.75rem',
+                  textAlign: 'center',
+                  backgroundColor: '#FEF3C7',
+                  border: '1px solid #FDE68A',
+                }}>
+                  <AlertCircle style={{ width: '1.5rem', height: '1.5rem', color: '#D97706', marginBottom: '0.25rem' }} />
+                  <p style={{ fontWeight: '600', color: '#D97706', margin: 0, fontSize: '0.9375rem' }}>Registration Closed</p>
                 </div>
               ) : (
-                <Button
-                  fullWidth
-                  size="lg"
+                <button
                   onClick={handleRegister}
+                  style={{
+                    width: '100%',
+                    padding: '0.875rem',
+                    backgroundColor: '#E91E63',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '0.75rem',
+                    fontSize: '1rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                  }}
                 >
                   Register Now
-                </Button>
+                </button>
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  fullWidth
-                  icon={Share2}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <button
                   onClick={handleShare}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.375rem',
+                    padding: '0.625rem',
+                    backgroundColor: '#FFFFFF',
+                    color: '#64748B',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '0.625rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }}
                 >
+                  <Share2 style={{ width: '0.875rem', height: '0.875rem' }} />
                   Share
-                </Button>
-                <Button
-                  variant="outline"
-                  fullWidth
-                  icon={Heart}
+                </button>
+                <button
+                  onClick={() => setLiked(!liked)}
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.375rem',
+                    padding: '0.625rem',
+                    backgroundColor: liked ? '#FEF2F2' : '#FFFFFF',
+                    color: liked ? '#EF4444' : '#64748B',
+                    border: `1px solid ${liked ? '#FECACA' : '#E2E8F0'}`,
+                    borderRadius: '0.625rem',
+                    fontSize: '0.8125rem',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }}
                 >
-                  Save
-                </Button>
+                  <Heart style={{ width: '0.875rem', height: '0.875rem', fill: liked ? '#EF4444' : 'none' }} />
+                  {liked ? 'Saved' : 'Save'}
+                </button>
               </div>
 
-              {/* Info */}
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <div className="flex items-start gap-2 text-sm text-text-secondary">
-                  <CheckCircle className="w-4 h-4 text-success mt-0.5" />
-                  <span>Instant confirmation & QR entry pass</span>
+              {/* Features */}
+              <div style={{
+                marginTop: '1.25rem',
+                paddingTop: '1.25rem',
+                borderTop: '1px solid #F1F5F9',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.625rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B' }}>
+                  <CheckCircle style={{ width: '0.875rem', height: '0.875rem', color: '#10B981', flexShrink: 0 }} />
+                  Instant confirmation & QR pass
                 </div>
                 {event.fee > 0 && (
-                  <div className="flex items-start gap-2 text-sm text-text-secondary mt-2">
-                    <CheckCircle className="w-4 h-4 text-success mt-0.5" />
-                    <span>Secure payment via Razorpay</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B' }}>
+                    <CheckCircle style={{ width: '0.875rem', height: '0.875rem', color: '#10B981', flexShrink: 0 }} />
+                    Secure payment via Razorpay
                   </div>
                 )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748B' }}>
+                  <CheckCircle style={{ width: '0.875rem', height: '0.875rem', color: '#10B981', flexShrink: 0 }} />
+                  Email reminder before event
+                </div>
               </div>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

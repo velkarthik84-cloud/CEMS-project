@@ -32,6 +32,10 @@ import Payments from './pages/admin/Payments';
 import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
 
+// Judge Pages
+import JudgeLogin from './pages/judge/JudgeLogin';
+import JudgeDashboard from './pages/judge/JudgeDashboard';
+
 function App() {
   return (
     <AuthProvider>
@@ -87,6 +91,10 @@ function App() {
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+
+          {/* Judge Routes */}
+          <Route path="/judge/login" element={<JudgeLogin />} />
+          <Route path="/judge/dashboard" element={<JudgeDashboard />} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

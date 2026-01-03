@@ -279,8 +279,8 @@ const Payments = () => {
 
       {/* Filters */}
       <div style={cardStyle}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
-          <div style={{ flex: 1, minWidth: '200px', position: 'relative' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ maxWidth: '24rem', minWidth: '200px', position: 'relative' }}>
             <Search style={{
               position: 'absolute',
               left: '0.75rem',
@@ -298,6 +298,7 @@ const Payments = () => {
               style={inputStyle}
             />
           </div>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div style={{ position: 'relative' }}>
             <select
               value={statusFilter}
@@ -320,6 +321,7 @@ const Payments = () => {
               color: '#94A3B8',
               pointerEvents: 'none',
             }} />
+          </div>
           </div>
         </div>
       </div>

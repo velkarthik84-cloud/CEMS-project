@@ -117,10 +117,11 @@ const ManageEvents = () => {
     flexWrap: 'wrap',
     gap: '1rem',
     alignItems: 'center',
+    justifyContent: 'space-between',
   };
 
   const searchBoxStyle = {
-    flex: 1,
+    maxWidth: '24rem',
     minWidth: '200px',
     position: 'relative',
   };
@@ -283,25 +284,27 @@ const ManageEvents = () => {
             style={searchInputStyle}
           />
         </div>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          style={selectStyle}
-        >
-          <option value="">All Categories</option>
-          {EVENT_CATEGORIES.map(cat => (
-            <option key={cat.value} value={cat.value}>{cat.label}</option>
-          ))}
-        </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          style={selectStyle}
-        >
-          {statusOptions.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={selectStyle}
+          >
+            <option value="">All Categories</option>
+            {EVENT_CATEGORIES.map(cat => (
+              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={selectStyle}
+          >
+            {statusOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {/* Events Table */}

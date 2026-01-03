@@ -118,12 +118,16 @@ const Events = () => {
 
   const filterRowStyle = {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: '1rem',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   };
 
   const searchContainerStyle = {
-    flex: 1,
+    maxWidth: '24rem',
+    minWidth: '200px',
     position: 'relative',
   };
 
@@ -200,7 +204,7 @@ const Events = () => {
 
         {/* Filters */}
         <div style={filterBoxStyle}>
-          <div style={filterRowStyle} className="lg:flex-row">
+          <div style={filterRowStyle}>
             {/* Search */}
             <div style={searchContainerStyle}>
               <Search style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', color: '#9CA3AF' }} />

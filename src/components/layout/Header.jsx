@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import {
   Menu,
@@ -7,7 +7,8 @@ import {
   Settings,
   User,
   LogOut,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -25,9 +26,19 @@ const pageTitles = {
 const Header = ({ onMenuClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchInputRef = useRef(null);
   const { userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearch]);
 
   // Get page title based on current path
   const getPageTitle = () => {
@@ -95,53 +106,80 @@ const Header = ({ onMenuClick }) => {
           </h1>
         </div>
 
-        {/* Center - Search Bar */}
-        <div style={{
-          flex: 1,
-          maxWidth: '400px',
-          position: 'relative',
-        }} className="hidden md:block">
-          <Search style={{
-            position: 'absolute',
-            left: '1rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: '1.125rem',
-            height: '1.125rem',
-            color: '#94A3B8',
-          }} />
-          <input
-            type="text"
-            placeholder="Search anything..."
-            style={{
-              width: '100%',
-              padding: '0.75rem 1rem 0.75rem 2.75rem',
-              backgroundColor: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              borderRadius: '0.75rem',
-              fontSize: '0.875rem',
-              color: '#1E293B',
-              outline: 'none',
-            }}
-          />
-        </div>
-
         {/* Right side - Icons & User */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {/* Search button - mobile */}
-          <button
-            style={{
-              padding: '0.625rem',
-              borderRadius: '0.5rem',
-              color: '#64748B',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-            className="md:hidden"
-          >
-            <Search style={{ width: '1.25rem', height: '1.25rem' }} />
-          </button>
+          {/* Search */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            {showSearch && (
+              <div style={{
+                position: 'absolute',
+                right: '2.5rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                display: 'flex',
+                alignItems: 'center',
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #E2E8F0',
+                borderRadius: '0.75rem',
+                overflow: 'hidden',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              }}>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search anything..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setShowSearch(false);
+                      setSearchTerm('');
+                    }
+                  }}
+                  style={{
+                    width: '280px',
+                    padding: '0.625rem 1rem',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    fontSize: '0.875rem',
+                    color: '#1E293B',
+                    outline: 'none',
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    setShowSearch(false);
+                    setSearchTerm('');
+                  }}
+                  style={{
+                    padding: '0.5rem',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#94A3B8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <X style={{ width: '1rem', height: '1rem' }} />
+                </button>
+              </div>
+            )}
+            <button
+              onClick={() => setShowSearch(!showSearch)}
+              style={{
+                padding: '0.625rem',
+                borderRadius: '0.5rem',
+                color: showSearch ? '#E91E63' : '#64748B',
+                backgroundColor: showSearch ? 'rgba(233, 30, 99, 0.1)' : 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <Search style={{ width: '1.25rem', height: '1.25rem' }} />
+            </button>
+          </div>
 
           {/* Notifications */}
           <div style={{ position: 'relative' }}>
