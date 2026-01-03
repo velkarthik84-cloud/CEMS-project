@@ -11,7 +11,8 @@ import {
   MessageSquare,
   ChevronLeft,
   LogOut,
-  X
+  X,
+  Award
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -21,6 +22,7 @@ const navItems = [
   { path: '/admin/participants', label: 'Bookings', icon: FileText },
   { path: '/admin/attendance', label: 'Attendance', icon: CalendarDays },
   { path: '/admin/payments', label: 'Payments', icon: DollarSign },
+  { path: '/admin/certificates', label: 'Certificates', icon: Award },
   { path: '/admin/analytics', label: 'Analytics', icon: Calendar },
   { path: '/admin/settings', label: 'Settings', icon: MessageSquare },
 ];

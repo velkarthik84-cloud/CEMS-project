@@ -124,12 +124,11 @@ const EventRegister = () => {
     }
 
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_demo',
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: event.fee * 100,
       currency: 'INR',
       name: 'Ventixe Events',
       description: `Registration for ${event.title}`,
-      image: '/vite.svg',
       handler: async (response) => {
         try {
           await updateDoc(doc(db, 'registrations', regData.id), {
@@ -667,8 +666,14 @@ const EventRegister = () => {
                     opacity: submitting ? 0.7 : 1,
                   }}
                 >
-                  {event.fee > 0 && <CreditCard style={{ width: '1.125rem', height: '1.125rem' }} />}
-                  {submitting ? 'Processing...' : (event.fee > 0 ? `Pay Rs.${event.fee} & Register` : 'Complete Registration')}
+                  {event.fee > 0 && event.mandatoryPayment && <CreditCard style={{ width: '1.125rem', height: '1.125rem' }} />}
+                  {submitting ? 'Processing...' : (
+                    event.isFree || event.fee === 0
+                      ? 'Complete Registration'
+                      : event.mandatoryPayment
+                        ? `Pay ₹${event.fee} & Register`
+                        : 'Register Now (Pay at Venue)'
+                  )}
                 </button>
               </form>
             </div>
@@ -722,16 +727,22 @@ const EventRegister = () => {
               <div style={{ borderTop: '1px solid #F1F5F9', paddingTop: '0.875rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
                   <span style={{ color: '#64748B', fontSize: '0.8125rem' }}>Registration Fee</span>
-                  <span style={{ fontWeight: '600', color: '#1E293B', fontSize: '0.875rem' }}>
-                    {event.fee > 0 ? `Rs.${event.fee}` : 'Free'}
+                  <span style={{ fontWeight: '600', color: event.isFree || event.fee === 0 ? '#10B981' : '#1E293B', fontSize: '0.875rem' }}>
+                    {event.isFree || event.fee === 0 ? 'FREE' : `₹${event.fee}`}
                   </span>
                 </div>
 
-                {event.fee > 0 && (
+                {event.fee > 0 && !event.isFree && (
                   <>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                      <span style={{ color: '#64748B', fontSize: '0.75rem' }}>Convenience Fee</span>
-                      <span style={{ color: '#1E293B', fontSize: '0.8125rem' }}>Rs.0</span>
+                      <span style={{ color: '#64748B', fontSize: '0.75rem' }}>Payment Mode</span>
+                      <span style={{
+                        color: event.mandatoryPayment ? '#E91E63' : '#10B981',
+                        fontSize: '0.75rem',
+                        fontWeight: '500'
+                      }}>
+                        {event.mandatoryPayment ? 'Pay Now' : 'Pay at Venue'}
+                      </span>
                     </div>
                     <div style={{
                       display: 'flex',
@@ -742,7 +753,7 @@ const EventRegister = () => {
                     }}>
                       <span style={{ fontWeight: '600', color: '#1E293B', fontSize: '0.875rem' }}>Total</span>
                       <span style={{ fontSize: '1.25rem', fontWeight: '700', color: '#E91E63' }}>
-                        Rs.{event.fee}
+                        ₹{event.fee}
                       </span>
                     </div>
                   </>

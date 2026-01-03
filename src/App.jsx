@@ -29,6 +29,7 @@ import Participants from './pages/admin/Participants';
 import ParticipantDetails from './pages/admin/ParticipantDetails';
 import Attendance from './pages/admin/Attendance';
 import Payments from './pages/admin/Payments';
+import Certificates from './pages/admin/Certificates';
 import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
 
@@ -88,6 +89,7 @@ function App() {
             <Route path="participants/:participantId" element={<ParticipantDetails />} />
             <Route path="attendance" element={<Attendance />} />
             <Route path="payments" element={<Payments />} />
+            <Route path="certificates" element={<Certificates />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<Settings />} />
           </Route>
