@@ -144,16 +144,19 @@ const Certificates = () => {
   const generateCertificate = async (participant, rank) => {
     setGenerating(participant.id);
 
-    const certType = getCertificateType(participant.score, rank, participants.length);
+    const certType = getCertificateType(participant.score, rank, participants.length, participant.judgeCount);
 
-    // Create certificate HTML
+    // Generate unique certificate number
+    const certNumber = `CERT-${Date.now().toString(36).toUpperCase()}-${participant.id.slice(0,4).toUpperCase()}`;
+
+    // Create certificate HTML with elegant blue and gold design
     const certificateHTML = `
       <!DOCTYPE html>
       <html>
       <head>
         <title>Certificate - ${participant.fullName}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Great+Vibes&family=Open+Sans:wght@400;600;700&display=swap');
 
           * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -170,207 +173,315 @@ const Certificates = () => {
           .certificate {
             width: 900px;
             height: 636px;
-            background: linear-gradient(135deg, #1E3A5F 0%, #0F172A 100%);
-            border-radius: 12px;
-            padding: 40px;
+            background: linear-gradient(135deg, #FAF8F5 0%, #F5F0E8 100%);
             position: relative;
             overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
           }
 
-          .certificate::before {
-            content: '';
+          /* Top decorative wave */
+          .top-wave {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            bottom: 0;
-            border: 8px solid ${certType.color};
-            border-radius: 12px;
-            pointer-events: none;
+            height: 120px;
           }
 
-          .certificate::after {
-            content: '';
+          .top-wave svg {
+            width: 100%;
+            height: 100%;
+          }
+
+          /* Bottom decorative wave */
+          .bottom-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+          }
+
+          .bottom-wave svg {
+            width: 100%;
+            height: 100%;
+          }
+
+          /* Gold medal badge */
+          .medal-badge {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            width: 90px;
+            height: 110px;
+            z-index: 10;
+          }
+
+          /* Corner ornament top right */
+          .corner-ornament-tr {
             position: absolute;
             top: 20px;
-            left: 20px;
             right: 20px;
-            bottom: 20px;
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            pointer-events: none;
+            width: 80px;
+            height: 80px;
+            z-index: 10;
           }
 
-          .inner {
-            background: rgba(255,255,255,0.02);
-            border-radius: 8px;
+          /* Corner ornament bottom left */
+          .corner-ornament-bl {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            z-index: 10;
+          }
+
+          /* Inner border frame */
+          .inner-frame {
+            position: absolute;
+            top: 100px;
+            right: 25px;
+            bottom: 80px;
+            left: 130px;
+            border: 1px solid #D4AF37;
+            opacity: 0.3;
+          }
+
+          .content {
+            position: relative;
+            z-index: 5;
             height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 60px 80px;
             text-align: center;
-            padding: 30px;
-            position: relative;
-          }
-
-          .badge {
-            width: 80px;
-            height: 80px;
-            background: ${certType.color};
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-          }
-
-          .badge svg {
-            width: 40px;
-            height: 40px;
-            color: ${certType.type === 'Silver' ? '#1E293B' : '#FFFFFF'};
           }
 
           .title {
             font-family: 'Playfair Display', serif;
-            font-size: 48px;
+            font-size: 52px;
             font-weight: 700;
-            color: #FFFFFF;
-            margin-bottom: 8px;
-            letter-spacing: 4px;
+            color: #1E3A5F;
+            letter-spacing: 8px;
             text-transform: uppercase;
+            margin-bottom: 0;
           }
 
           .subtitle {
-            font-size: 18px;
-            color: ${certType.color};
+            font-family: 'Open Sans', sans-serif;
+            font-size: 20px;
+            color: #D4AF37;
             font-weight: 600;
+            letter-spacing: 6px;
+            text-transform: uppercase;
             margin-bottom: 30px;
-            letter-spacing: 2px;
           }
 
           .presented {
-            font-size: 14px;
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 8px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 16px;
+            color: #4A5568;
+            margin-bottom: 15px;
           }
 
           .name {
-            font-family: 'Playfair Display', serif;
-            font-size: 36px;
-            font-weight: 700;
-            color: #FFFFFF;
-            margin-bottom: 20px;
-            border-bottom: 2px solid ${certType.color};
-            padding-bottom: 10px;
-            min-width: 300px;
+            font-family: 'Great Vibes', cursive;
+            font-size: 56px;
+            color: #D4AF37;
+            margin-bottom: 10px;
+            line-height: 1.2;
+          }
+
+          .name-underline {
+            width: 400px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #D4AF37, #D4AF37, transparent);
+            margin: 0 auto 25px;
           }
 
           .description {
-            font-size: 16px;
-            color: rgba(255,255,255,0.8);
-            max-width: 600px;
-            line-height: 1.6;
-            margin-bottom: 30px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 14px;
+            color: #4A5568;
+            max-width: 550px;
+            line-height: 1.8;
+            margin-bottom: 15px;
           }
 
           .event-name {
-            font-size: 20px;
-            font-weight: 600;
-            color: ${certType.color};
-            margin-bottom: 8px;
-          }
-
-          .score {
-            font-size: 24px;
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
             font-weight: 700;
-            color: #FFFFFF;
-            margin-bottom: 30px;
+            color: #1E3A5F;
+            margin-bottom: 5px;
           }
 
-          .footer {
+          .score-badge {
+            display: inline-block;
+            padding: 8px 24px;
+            background: linear-gradient(135deg, #D4AF37 0%, #C5A028 100%);
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: 14px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+          }
+
+          .signatures {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
             width: 100%;
+            max-width: 600px;
             margin-top: auto;
           }
 
           .signature {
             text-align: center;
+            min-width: 180px;
           }
 
           .signature-line {
-            width: 150px;
-            border-bottom: 1px solid rgba(255,255,255,0.5);
+            width: 160px;
+            border-bottom: 1px solid #1E3A5F;
             margin-bottom: 8px;
           }
 
-          .signature-text {
-            font-size: 12px;
-            color: rgba(255,255,255,0.6);
-          }
-
-          .date {
+          .signature-name {
+            font-family: 'Open Sans', sans-serif;
             font-size: 14px;
-            color: rgba(255,255,255,0.6);
+            font-weight: 700;
+            color: #1E3A5F;
+            margin-bottom: 2px;
           }
 
-          .cert-id {
-            font-size: 10px;
-            color: rgba(255,255,255,0.4);
+          .signature-title {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 12px;
+            color: #D4AF37;
+            font-weight: 600;
+          }
+
+          .cert-number {
             position: absolute;
-            bottom: 15px;
-            right: 20px;
+            bottom: 25px;
+            right: 30px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 10px;
+            color: #94A3B8;
+            letter-spacing: 1px;
+          }
+
+          .issue-date {
+            position: absolute;
+            bottom: 25px;
+            left: 140px;
+            font-family: 'Open Sans', sans-serif;
+            font-size: 10px;
+            color: #94A3B8;
           }
 
           @media print {
             body { background: white; padding: 0; }
-            .certificate { margin: 0; }
+            .certificate { margin: 0; box-shadow: none; }
           }
         </style>
       </head>
       <body>
         <div class="certificate">
-          <div class="inner">
-            <div class="badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                ${certType.type === 'Gold' || certType.type === 'Silver' || certType.type === 'Bronze'
-                  ? '<path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>'
-                  : '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>'}
-              </svg>
-            </div>
+          <!-- Top decorative wave -->
+          <div class="top-wave">
+            <svg viewBox="0 0 900 120" preserveAspectRatio="none">
+              <path d="M0,0 L900,0 L900,60 Q750,120 450,80 Q150,40 0,100 Z" fill="#1E3A5F"/>
+              <path d="M0,0 L900,0 L900,50 Q720,100 400,70 Q80,40 0,90 Z" fill="#D4AF37" opacity="0.3"/>
+            </svg>
+          </div>
 
+          <!-- Bottom decorative wave -->
+          <div class="bottom-wave">
+            <svg viewBox="0 0 900 100" preserveAspectRatio="none">
+              <path d="M0,100 L900,100 L900,40 Q750,0 450,30 Q150,60 0,10 Z" fill="#1E3A5F"/>
+              <path d="M0,100 L900,100 L900,50 Q720,10 400,35 Q80,60 0,20 Z" fill="#D4AF37" opacity="0.3"/>
+            </svg>
+          </div>
+
+          <!-- Gold Medal Badge -->
+          <div class="medal-badge">
+            <svg viewBox="0 0 90 110" fill="none">
+              <!-- Ribbon -->
+              <path d="M25,55 L25,110 L45,95 L65,110 L65,55" fill="#D4AF37"/>
+              <path d="M25,55 L25,110 L45,95" fill="#C5A028"/>
+              <!-- Medal circle -->
+              <circle cx="45" cy="40" r="38" fill="url(#goldGradient)" stroke="#C5A028" stroke-width="2"/>
+              <circle cx="45" cy="40" r="30" fill="none" stroke="#FFFFFF" stroke-width="1" opacity="0.5"/>
+              <!-- Star in medal -->
+              <path d="M45,15 L50,30 L66,30 L53,40 L58,55 L45,46 L32,55 L37,40 L24,30 L40,30 Z" fill="#FFFFFF" opacity="0.9"/>
+              <defs>
+                <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#F4D03F"/>
+                  <stop offset="50%" style="stop-color:#D4AF37"/>
+                  <stop offset="100%" style="stop-color:#C5A028"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+
+          <!-- Corner ornament top right -->
+          <div class="corner-ornament-tr">
+            <svg viewBox="0 0 80 80" fill="none">
+              <path d="M80,0 L80,10 Q60,10 60,30 L60,80 L50,80 L50,30 Q50,0 80,0" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+              <circle cx="70" cy="20" r="3" fill="#D4AF37"/>
+              <path d="M65,5 Q75,15 65,25 Q55,15 65,5" stroke="#D4AF37" stroke-width="1" fill="none"/>
+            </svg>
+          </div>
+
+          <!-- Corner ornament bottom left -->
+          <div class="corner-ornament-bl">
+            <svg viewBox="0 0 80 80" fill="none">
+              <path d="M0,80 L0,70 Q20,70 20,50 L20,0 L30,0 L30,50 Q30,80 0,80" stroke="#D4AF37" stroke-width="1.5" fill="none"/>
+              <circle cx="10" cy="60" r="3" fill="#D4AF37"/>
+              <path d="M15,75 Q5,65 15,55 Q25,65 15,75" stroke="#D4AF37" stroke-width="1" fill="none"/>
+            </svg>
+          </div>
+
+          <div class="content">
             <h1 class="title">Certificate</h1>
             <p class="subtitle">of ${certType.type}</p>
 
-            <p class="presented">This is to certify that</p>
+            <p class="presented">This certificate is proudly presented to</p>
             <h2 class="name">${participant.fullName}</h2>
+            <div class="name-underline"></div>
 
             <p class="description">
-              has successfully participated and demonstrated outstanding performance in
+              For demonstrating exceptional dedication and outstanding performance in the event.
+              This achievement reflects commitment to excellence and remarkable accomplishment.
             </p>
 
             <p class="event-name">${selectedEventData?.title || 'Event'}</p>
-            <p class="score">Score: ${participant.score}/100 ${rank <= 3 ? `• Rank: #${rank}` : ''}</p>
-
-            <div class="footer">
-              <div class="signature">
-                <div class="signature-line"></div>
-                <p class="signature-text">Event Organizer</p>
-              </div>
-              <div class="date">
-                Issued on: ${formatDate(selectedEventData?.eventDate)}
-              </div>
-              <div class="signature">
-                <div class="signature-line"></div>
-                <p class="signature-text">Certificate Authority</p>
-              </div>
+            <div class="score-badge">
+              Score: ${participant.score}/100 ${rank <= 3 ? ` | Rank #${rank}` : ''}
             </div>
 
-            <p class="cert-id">Certificate ID: CERT-${participant.registrationId || participant.id.slice(0,8).toUpperCase()}</p>
+            <div class="signatures">
+              <div class="signature">
+                <div class="signature-line"></div>
+                <p class="signature-name">Event Organizer</p>
+                <p class="signature-title">Director of Events</p>
+              </div>
+              <div class="signature">
+                <div class="signature-line"></div>
+                <p class="signature-name">Certificate Authority</p>
+                <p class="signature-title">Head of Certification</p>
+              </div>
+            </div>
           </div>
+
+          <p class="issue-date">Issued on: ${formatDate(selectedEventData?.eventDate)}</p>
+          <p class="cert-number">Certificate No: ${certNumber}</p>
         </div>
       </body>
       </html>

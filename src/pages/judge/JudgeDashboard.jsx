@@ -1851,33 +1851,8 @@ const JudgeDashboard = () => {
           })}
         </nav>
 
-        {/* Logout */}
-        <div style={{ padding: '1rem', borderTop: '1px solid #F1F5F9' }}>
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.875rem',
-              padding: '0.875rem 1rem',
-              width: '100%',
-              backgroundColor: 'transparent',
-              color: '#EF4444',
-              border: 'none',
-              borderRadius: '0.75rem',
-              fontSize: '0.9375rem',
-              fontWeight: '500',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'background-color 0.2s',
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)'}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <LogOut style={{ width: '1.25rem', height: '1.25rem' }} />
-            Logout
-          </button>
-        </div>
+       
+        
       </aside>
 
       {/* Main Content */}

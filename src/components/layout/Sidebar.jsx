@@ -232,51 +232,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           })}
         </nav>
 
-        {/* User Profile & Logout */}
-        <div style={footerStyle}>
-          {!collapsed && (
-            <div style={userProfileStyle}>
-              <div style={userAvatarStyle}>
-                {userProfile?.displayName?.[0]?.toUpperCase() || 'A'}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {userProfile?.displayName || 'Admin'}
-                </p>
-                <p style={{ fontSize: '0.75rem', color: '#94A3B8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  Admin
-                </p>
-              </div>
-            </div>
-          )}
-          <button
-            onClick={handleLogout}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.875rem',
-              padding: '0.875rem 1rem',
-              borderRadius: '0.75rem',
-              width: '100%',
-              color: '#EF4444',
-              backgroundColor: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              fontSize: '0.9375rem',
-              fontWeight: '500',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <LogOut style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
-            {!collapsed && <span>Logout</span>}
-          </button>
-        </div>
+        
 
         {/* Collapse Button (Desktop only) */}
         <button
