@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Calendar,
@@ -32,145 +32,183 @@ const navItems = [
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
-  const location = useLocation();
-  const { logout, userProfile } = useAuth();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
-  const sidebarStyle = {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    zIndex: 50,
-    height: '100%',
-    backgroundColor: '#FFFFFF',
-    transition: 'all 0.3s ease-in-out',
-    width: collapsed ? '5rem' : '16rem',
-    display: 'flex',
-    flexDirection: 'column',
-    borderRight: '1px solid #F1F5F9',
-  };
-
-  const overlayStyle = {
-    position: 'fixed',
-    inset: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    zIndex: 40,
-  };
-
-  const logoContainerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    padding: '1.5rem 1.25rem',
-    borderBottom: '1px solid #F1F5F9',
-  };
-
-  const logoIconStyle = {
-    width: '2.5rem',
-    height: '2.5rem',
-    background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-    borderRadius: '0.75rem',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  };
-
-  const navStyle = {
-    flex: 1,
-    padding: '1.5rem 1rem',
-    overflowY: 'auto',
-  };
-
-  const navItemStyle = (isActive) => ({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.875rem',
-    padding: '0.875rem 1rem',
-    borderRadius: '0.75rem',
-    transition: 'all 0.2s ease',
-    marginBottom: '0.375rem',
-    backgroundColor: isActive ? 'rgba(233, 30, 99, 0.08)' : 'transparent',
-    color: isActive ? '#E91E63' : '#64748B',
-    textDecoration: 'none',
-    cursor: 'pointer',
-    fontWeight: isActive ? '600' : '500',
-    fontSize: '0.9375rem',
-  });
-
-  const footerStyle = {
-    padding: '1rem',
-    borderTop: '1px solid #F1F5F9',
-  };
-
-  const userProfileStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-    padding: '0.75rem',
-    marginBottom: '0.5rem',
-    backgroundColor: '#F8FAFC',
-    borderRadius: '0.75rem',
-  };
-
-  const userAvatarStyle = {
-    width: '2.5rem',
-    height: '2.5rem',
-    background: 'linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%)',
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: '#FFFFFF',
-    flexShrink: 0,
-  };
-
-  const collapseButtonStyle = {
-    position: 'absolute',
-    right: '-0.75rem',
-    top: '5rem',
-    width: '1.5rem',
-    height: '1.5rem',
-    backgroundColor: '#FFFFFF',
-    borderRadius: '50%',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: '#64748B',
-    border: '1px solid #E2E8F0',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  };
+  const { userProfile } = useAuth();
 
   return (
     <>
+      <style>{`
+        .sidebar {
+          position: fixed;
+          top: 0;
+          left: 0;
+          z-index: 50;
+          height: 100%;
+          background-color: #FFFFFF;
+          transition: all 0.3s ease-in-out;
+          display: flex;
+          flex-direction: column;
+          border-right: 1px solid #F1F5F9;
+          transform: translateX(-100%);
+        }
+
+        .sidebar.open {
+          transform: translateX(0);
+        }
+
+        .sidebar.collapsed {
+          width: 5rem;
+        }
+
+        .sidebar:not(.collapsed) {
+          width: 16rem;
+        }
+
+        .sidebar-overlay {
+          position: fixed;
+          inset: 0;
+          background-color: rgba(0, 0, 0, 0.5);
+          z-index: 40;
+          display: none;
+        }
+
+        .sidebar-overlay.active {
+          display: block;
+        }
+
+        .sidebar-logo {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 1.25rem 1rem;
+          border-bottom: 1px solid #F1F5F9;
+        }
+
+        .sidebar-logo-icon {
+          width: 2.5rem;
+          height: 2.5rem;
+          background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
+          border-radius: 0.75rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .sidebar-close-btn {
+          padding: 0.5rem;
+          border-radius: 0.5rem;
+          background-color: transparent;
+          border: none;
+          cursor: pointer;
+          color: #64748B;
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .sidebar-nav {
+          flex: 1;
+          padding: 1rem 0.75rem;
+          overflow-y: auto;
+        }
+
+        .sidebar-nav-item {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.75rem 1rem;
+          border-radius: 0.75rem;
+          transition: all 0.2s ease;
+          margin-bottom: 0.25rem;
+          text-decoration: none;
+          cursor: pointer;
+          font-weight: 500;
+          font-size: 0.9rem;
+        }
+
+        .sidebar-nav-item.active {
+          background-color: rgba(233, 30, 99, 0.08);
+          color: #E91E63;
+          font-weight: 600;
+        }
+
+        .sidebar-nav-item:not(.active) {
+          background-color: transparent;
+          color: #64748B;
+        }
+
+        .sidebar-nav-item:not(.active):hover {
+          background-color: #F8FAFC;
+          color: #1E293B;
+        }
+
+        .sidebar-collapse-btn {
+          position: absolute;
+          right: -0.75rem;
+          top: 5rem;
+          width: 1.5rem;
+          height: 1.5rem;
+          background-color: #FFFFFF;
+          border-radius: 50%;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          color: #64748B;
+          border: 1px solid #E2E8F0;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .sidebar-collapse-btn:hover {
+          background-color: #F8FAFC;
+        }
+
+        /* Desktop styles */
+        @media (min-width: 1024px) {
+          .sidebar {
+            transform: translateX(0);
+          }
+
+          .sidebar-overlay {
+            display: none !important;
+          }
+
+          .sidebar-close-btn {
+            display: none;
+          }
+
+          .sidebar-collapse-btn {
+            display: flex;
+          }
+
+          .sidebar-logo {
+            padding: 1.5rem 1.25rem;
+          }
+
+          .sidebar-nav {
+            padding: 1.5rem 1rem;
+          }
+
+          .sidebar-nav-item {
+            padding: 0.875rem 1rem;
+            font-size: 0.9375rem;
+          }
+        }
+      `}</style>
+
       {/* Mobile Overlay */}
-      {isOpen && (
-        <div
-          style={overlayStyle}
-          onClick={onClose}
-          className="lg:hidden"
-        />
-      )}
+      <div
+        className={`sidebar-overlay ${isOpen ? 'active' : ''}`}
+        onClick={onClose}
+      />
 
       {/* Sidebar */}
-      <aside
-        style={sidebarStyle}
-        className={`${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
-      >
+      <aside className={`sidebar ${isOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}>
         {/* Logo */}
-        <div style={logoContainerStyle}>
-          <div style={logoIconStyle}>
+        <div className="sidebar-logo">
+          <div className="sidebar-logo-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" />
               <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -178,56 +216,30 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             </svg>
           </div>
           {!collapsed && (
-            <div>
+            <div style={{ overflow: 'hidden' }}>
               <span style={{ fontWeight: '700', fontSize: '1.375rem', color: '#1E293B', letterSpacing: '-0.025em' }}>Ventixe</span>
-              <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.125rem' }}>
-                Hello {userProfile?.displayName?.split(' ')[0] || 'Admin'}, welcome back!
+              <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                Hello {userProfile?.displayName?.split(' ')[0] || 'Admin'}!
               </p>
             </div>
           )}
-          <button
-            onClick={onClose}
-            style={{ padding: '0.5rem', borderRadius: '0.5rem', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B', marginLeft: 'auto' }}
-            className="lg:hidden"
-          >
+          <button onClick={onClose} className="sidebar-close-btn">
             <X style={{ width: '1.25rem', height: '1.25rem' }} />
           </button>
         </div>
 
         {/* Navigation */}
-        <nav style={navStyle}>
+        <nav className="sidebar-nav">
           {navItems.map((item) => {
             const Icon = item.icon;
-
-            // Check if current path matches this nav item
-            let isActive = false;
-            if (item.exact) {
-              // For Dashboard, only exact match
-              isActive = location.pathname === item.path;
-            } else {
-              // For other items, match exact path or child paths
-              isActive = location.pathname === item.path ||
-                         location.pathname.startsWith(item.path + '/');
-            }
 
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
+                end={item.exact}
                 onClick={onClose}
-                style={navItemStyle(isActive)}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = '#F8FAFC';
-                    e.currentTarget.style.color = '#1E293B';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#64748B';
-                  }
-                }}
+                className={({ isActive }) => `sidebar-nav-item ${isActive ? 'active' : ''}`}
               >
                 <Icon style={{ width: '1.25rem', height: '1.25rem', flexShrink: 0 }} />
                 {!collapsed && <span>{item.label}</span>}
@@ -236,20 +248,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           })}
         </nav>
 
-        
-
         {/* Collapse Button (Desktop only) */}
-        <button
-          onClick={onToggleCollapse}
-          style={collapseButtonStyle}
-          className="hidden lg:flex"
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = '#F8FAFC';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = '#FFFFFF';
-          }}
-        >
+        <button onClick={onToggleCollapse} className="sidebar-collapse-btn">
           <ChevronLeft style={{
             width: '0.875rem',
             height: '0.875rem',
