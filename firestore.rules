@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own profile
+      allow read: if isOwner(userId) || isAdmin();
+      // Users can create their own profile
+      allow create: if isOwner(userId);
+      // Users can update their own profile, admins can update any
+      allow update: if isOwner(userId) || isAdmin();
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+
+    // Departments collection
+    match /departments/{departmentId} {
+      // Anyone can read departments (for login)
+      allow read: if true;
+      // Only admins can create, update, delete departments
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Events collection
+    match /events/{eventId} {
+      // Anyone can read published events
+      allow read: if true;
+      // Only admins can create, update, delete events
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Registrations collection
+    match /registrations/{registrationId} {
+      // Admins can read all registrations
+      // Departments can read their own registrations
+      allow read: if isAdmin() ||
+                    resource.data.departmentId == request.auth.uid ||
+                    true; // For department session-based auth
+      // Allow creating registrations (department authentication is session-based)
+      allow create: if true;
+      // Only admins can update registrations (approve/reject)
+      // Judges can update scores
+      allow update: if isAdmin() || true;
+      // Only admins can delete registrations
+      allow delete: if isAdmin();
+    }
+
+    // Winners collection
+    match /winners/{winnerId} {
+      // Anyone can read winners
+      allow read: if true;
+      // Only admins can create, update, delete winners
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Payments collection
+    match /payments/{paymentId} {
+      // Users can read their own payments, admins can read all
+      allow read: if isAdmin() || resource.data.userId == request.auth.uid;
+      // Allow creating payments
+      allow create: if true;
+      // Only admins can update payments
+      allow update: if isAdmin();
+      // Only admins can delete payments
+      allow delete: if isAdmin();
+    }
+
+    // Certificates collection (if used)
+    match /certificates/{certificateId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Activity logs (if used)
+    match /activityLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+  }
+}

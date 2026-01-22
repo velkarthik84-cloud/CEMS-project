@@ -4,7 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AdminRoute, PublicOnlyRoute } from './components/ProtectedRoute';
 
 // Layouts
-import { AdminLayout, PublicLayout } from './components/layout';
+import { AdminLayout, PublicLayout, DepartmentLayout } from './components/layout';
 
 // Auth Pages
 import Login from './pages/auth/Login';
@@ -32,10 +32,25 @@ import Payments from './pages/admin/Payments';
 import Certificates from './pages/admin/Certificates';
 import Analytics from './pages/admin/Analytics';
 import Settings from './pages/admin/Settings';
+import Departments from './pages/admin/Departments';
+import Registrations from './pages/admin/Registrations';
+import Winners from './pages/admin/Winners';
 
 // Judge Pages
 import JudgeLogin from './pages/judge/JudgeLogin';
 import JudgeDashboard from './pages/judge/JudgeDashboard';
+
+// Department Pages
+import {
+  DepartmentLogin,
+  DepartmentDashboard,
+  DepartmentEvents,
+  StudentRegistration,
+  MyRegistrations,
+  LiveScores,
+  DepartmentResults,
+  DepartmentCertificates,
+} from './pages/department';
 
 function App() {
   return (
@@ -92,11 +107,27 @@ function App() {
             <Route path="certificates" element={<Certificates />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="settings" element={<Settings />} />
+            <Route path="departments" element={<Departments />} />
+            <Route path="registrations" element={<Registrations />} />
+            <Route path="winners" element={<Winners />} />
           </Route>
 
           {/* Judge Routes */}
           <Route path="/judge/login" element={<JudgeLogin />} />
           <Route path="/judge/dashboard" element={<JudgeDashboard />} />
+
+          {/* Department Routes */}
+          <Route path="/department/login" element={<DepartmentLogin />} />
+          <Route path="/department" element={<DepartmentLayout />}>
+            <Route index element={<Navigate to="/department/dashboard" replace />} />
+            <Route path="dashboard" element={<DepartmentDashboard />} />
+            <Route path="events" element={<DepartmentEvents />} />
+            <Route path="register" element={<StudentRegistration />} />
+            <Route path="registrations" element={<MyRegistrations />} />
+            <Route path="live-scores" element={<LiveScores />} />
+            <Route path="results" element={<DepartmentResults />} />
+            <Route path="certificates" element={<DepartmentCertificates />} />
+          </Route>
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Mail, Lock, Calendar, UserCheck, User, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, Calendar, UserCheck, User, Eye, EyeOff, Building2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../services/firebase';
@@ -17,9 +17,11 @@ const loginSchema = z.object({
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
-  const [loginType, setLoginType] = useState('admin'); // 'admin' or 'judge'
+  const [loginType, setLoginType] = useState('admin'); // 'admin', 'judge', or 'department'
   const [showJudgePassword, setShowJudgePassword] = useState(false);
+  const [showDepartmentPassword, setShowDepartmentPassword] = useState(false);
   const [judgeForm, setJudgeForm] = useState({ usernameOrEmail: '', password: '' });
+  const [departmentForm, setDepartmentForm] = useState({ username: '', password: '' });
   const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
 
@@ -107,6 +109,73 @@ const Login = () => {
     }
   };
 
+  const handleDepartmentLogin = async (e) => {
+    e.preventDefault();
+
+    if (!departmentForm.username || !departmentForm.password) {
+      toast.error('Please enter username and password');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const departmentsRef = collection(db, 'departments');
+      const snapshot = await getDocs(departmentsRef);
+
+      if (snapshot.empty) {
+        toast.error('No departments found. Please contact admin.');
+        setLoading(false);
+        return;
+      }
+
+      const inputUsername = departmentForm.username.toLowerCase().trim();
+      let foundDepartment = null;
+
+      snapshot.docs.forEach((doc) => {
+        const dept = { id: doc.id, ...doc.data() };
+        if (dept.username?.toLowerCase() === inputUsername) {
+          foundDepartment = dept;
+        }
+      });
+
+      if (!foundDepartment) {
+        toast.error('Invalid username or password');
+        setLoading(false);
+        return;
+      }
+
+      if (foundDepartment.password !== departmentForm.password) {
+        toast.error('Invalid username or password');
+        setLoading(false);
+        return;
+      }
+
+      if (foundDepartment.isActive === false) {
+        toast.error('Your department account has been deactivated. Please contact admin.');
+        setLoading(false);
+        return;
+      }
+
+      const sessionData = {
+        departmentId: foundDepartment.id,
+        departmentName: foundDepartment.name,
+        departmentCode: foundDepartment.code,
+        username: foundDepartment.username,
+        loginTime: new Date().toISOString(),
+      };
+
+      sessionStorage.setItem('departmentSession', JSON.stringify(sessionData));
+
+      toast.success(`Welcome, ${foundDepartment.name}!`);
+      navigate('/department/dashboard');
+    } catch (error) {
+      console.error('Department login error:', error);
+      toast.error('Failed to login. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
@@ -170,14 +239,14 @@ const Login = () => {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.5rem',
-    padding: '0.75rem 1rem',
+    gap: '0.375rem',
+    padding: '0.625rem 0.5rem',
     borderRadius: '0.5rem',
     border: 'none',
     backgroundColor: isActive ? '#FFFFFF' : 'transparent',
     color: isActive ? '#1E293B' : '#64748B',
     fontWeight: isActive ? '600' : '500',
-    fontSize: '0.875rem',
+    fontSize: '0.8125rem',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
@@ -211,6 +280,7 @@ const Login = () => {
     fontSize: '0.9375rem',
     color: '#1E293B',
     outline: 'none',
+    boxSizing: 'border-box',
   };
 
   const labelStyle = {
@@ -360,7 +430,7 @@ const Login = () => {
     justifyContent: 'center',
     gap: '0.5rem',
     padding: '0.875rem',
-    backgroundColor: '#E91E63',
+    backgroundColor: '#1E3A5F',
     color: '#FFFFFF',
     border: 'none',
     borderRadius: '0.5rem',
@@ -368,6 +438,46 @@ const Login = () => {
     fontWeight: '600',
     cursor: 'pointer',
   };
+
+  const getRightSideContent = () => {
+    switch (loginType) {
+      case 'judge':
+        return {
+          icon: <UserCheck style={{ width: '3rem', height: '3rem' }} />,
+          title: 'Score Participants Easily',
+          description: 'Access your judging dashboard to score participants. View event details, participant list, and submit scores in real-time.',
+          stats: [
+            { value: 'Fast', label: 'Scoring' },
+            { value: 'Real-time', label: 'Updates' },
+            { value: 'Easy', label: 'Interface' },
+          ],
+        };
+      case 'department':
+        return {
+          icon: <Building2 style={{ width: '3rem', height: '3rem' }} />,
+          title: 'Department Portal',
+          description: 'Register students for cultural events, track registration status, view live scores, and download certificates for winners.',
+          stats: [
+            { value: 'Register', label: 'Students' },
+            { value: 'Track', label: 'Status' },
+            { value: 'View', label: 'Scores' },
+          ],
+        };
+      default:
+        return {
+          icon: <Calendar style={{ width: '3rem', height: '3rem' }} />,
+          title: 'Manage Events Effortlessly',
+          description: 'Create, manage, and track your events with our powerful event management platform. QR-based check-ins, real-time analytics, and seamless registration.',
+          stats: [
+            { value: '500+', label: 'Events' },
+            { value: '10K+', label: 'Registrations' },
+            { value: '99%', label: 'Satisfaction' },
+          ],
+        };
+    }
+  };
+
+  const rightContent = getRightSideContent();
 
   return (
     <div style={containerStyle}>
@@ -390,7 +500,15 @@ const Login = () => {
               style={tabStyle(loginType === 'admin')}
             >
               <User style={{ width: '1rem', height: '1rem' }} />
-              Admin Login
+              Admin
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginType('department')}
+              style={tabStyle(loginType === 'department')}
+            >
+              <Building2 style={{ width: '1rem', height: '1rem' }} />
+              Department
             </button>
             <button
               type="button"
@@ -398,7 +516,7 @@ const Login = () => {
               style={tabStyle(loginType === 'judge')}
             >
               <UserCheck style={{ width: '1rem', height: '1rem' }} />
-              Judge Login
+              Judge
             </button>
           </div>
 
@@ -478,6 +596,92 @@ const Login = () => {
                 <Link to="/register" style={signupLinkStyle}>
                   Sign up
                 </Link>
+              </p>
+            </>
+          ) : loginType === 'department' ? (
+            <>
+              {/* Department Login */}
+              <h1 style={titleStyle}>Department Login</h1>
+              <p style={subtitleStyle}>Enter your credentials to access the department portal.</p>
+
+              <form onSubmit={handleDepartmentLogin} style={formStyle}>
+                <div>
+                  <label style={labelStyle}>Username</label>
+                  <div style={inputWrapperStyle}>
+                    <Building2 style={iconStyle} />
+                    <input
+                      type="text"
+                      placeholder="Enter your username"
+                      value={departmentForm.username}
+                      onChange={(e) => setDepartmentForm({ ...departmentForm, username: e.target.value })}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Password</label>
+                  <div style={inputWrapperStyle}>
+                    <Lock style={iconStyle} />
+                    <input
+                      type={showDepartmentPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={departmentForm.password}
+                      onChange={(e) => setDepartmentForm({ ...departmentForm, password: e.target.value })}
+                      style={{ ...inputStyle, paddingRight: '3rem' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowDepartmentPassword(!showDepartmentPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '0.875rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      {showDepartmentPassword ? (
+                        <EyeOff style={{ width: '1.25rem', height: '1.25rem', color: '#94A3B8' }} />
+                      ) : (
+                        <Eye style={{ width: '1.25rem', height: '1.25rem', color: '#94A3B8' }} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={loading} style={{ ...buttonStyle, opacity: loading ? 0.7 : 1 }}>
+                  {loading ? 'Signing in...' : 'Sign In as Department'}
+                </button>
+              </form>
+
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1rem',
+                backgroundColor: '#EFF6FF',
+                borderRadius: '0.5rem',
+                border: '1px solid #BFDBFE',
+              }}>
+                <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#1E40AF', margin: '0 0 0.5rem 0' }}>
+                  Demo Credentials:
+                </p>
+                <p style={{ fontSize: '0.8125rem', color: '#1E40AF', margin: 0, fontFamily: 'monospace' }}>
+                  Username: <strong>dept_cse</strong> | Password: <strong>Cse@1234</strong>
+                </p>
+              </div>
+
+              <p style={signupTextStyle}>
+                Are you an admin?{' '}
+                <button
+                  type="button"
+                  onClick={() => setLoginType('admin')}
+                  style={{ ...signupLinkStyle, background: 'none', border: 'none', cursor: 'pointer' }}
+                >
+                  Login as Admin
+                </button>
               </p>
             </>
           ) : (
@@ -571,53 +775,21 @@ const Login = () => {
       <div style={rightSideStyle} className="hidden lg:flex">
         <div style={rightContentStyle}>
           <div style={rightIconStyle}>
-            {loginType === 'admin' ? (
-              <Calendar style={{ width: '3rem', height: '3rem' }} />
-            ) : (
-              <UserCheck style={{ width: '3rem', height: '3rem' }} />
-            )}
+            {rightContent.icon}
           </div>
           <h2 style={rightTitleStyle}>
-            {loginType === 'admin' ? 'Manage Events Effortlessly' : 'Score Participants Easily'}
+            {rightContent.title}
           </h2>
           <p style={rightDescStyle}>
-            {loginType === 'admin'
-              ? 'Create, manage, and track your events with our powerful event management platform. QR-based check-ins, real-time analytics, and seamless registration.'
-              : 'Access your judging dashboard to score participants. View event details, participant list, and submit scores in real-time.'
-            }
+            {rightContent.description}
           </p>
           <div style={statsContainerStyle}>
-            {loginType === 'admin' ? (
-              <>
-                <div style={statBoxStyle}>
-                  <div style={statValueStyle}>500+</div>
-                  <div style={statLabelStyle}>Events</div>
-                </div>
-                <div style={statBoxStyle}>
-                  <div style={statValueStyle}>10K+</div>
-                  <div style={statLabelStyle}>Registrations</div>
-                </div>
-                <div style={statBoxStyle}>
-                  <div style={statValueStyle}>99%</div>
-                  <div style={statLabelStyle}>Satisfaction</div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div style={statBoxStyle}>
-                  <div style={statValueStyle}>Fast</div>
-                  <div style={statLabelStyle}>Scoring</div>
-                </div>
-                <div style={statBoxStyle}>
-                  <div style={statValueStyle}>Real-time</div>
-                  <div style={statLabelStyle}>Updates</div>
-                </div>
-                <div style={statBoxStyle}>
-                  <div style={statValueStyle}>Easy</div>
-                  <div style={statLabelStyle}>Interface</div>
-                </div>
-              </>
-            )}
+            {rightContent.stats.map((stat, index) => (
+              <div key={index} style={statBoxStyle}>
+                <div style={statValueStyle}>{stat.value}</div>
+                <div style={statLabelStyle}>{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

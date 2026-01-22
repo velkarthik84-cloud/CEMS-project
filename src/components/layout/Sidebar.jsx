@@ -3,28 +3,32 @@ import {
   LayoutDashboard,
   Calendar,
   FileText,
-  Mail,
   CalendarDays,
   Ticket,
   DollarSign,
-  Image,
-  MessageSquare,
   ChevronLeft,
-  LogOut,
   X,
-  Award
+  Award,
+  Building2,
+  ClipboardList,
+  Trophy,
+  BarChart3,
+  Settings,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const navItems = [
   { path: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
   { path: '/admin/events', label: 'Events', icon: Ticket },
-  { path: '/admin/participants', label: 'Bookings', icon: FileText },
+  { path: '/admin/departments', label: 'Departments', icon: Building2 },
+  { path: '/admin/registrations', label: 'Registrations', icon: ClipboardList },
+  { path: '/admin/participants', label: 'Participants', icon: FileText },
   { path: '/admin/attendance', label: 'Attendance', icon: CalendarDays },
-  { path: '/admin/payments', label: 'Payments', icon: DollarSign },
+  { path: '/admin/winners', label: 'Winners', icon: Trophy },
   { path: '/admin/certificates', label: 'Certificates', icon: Award },
-  { path: '/admin/analytics', label: 'Analytics', icon: Calendar },
-  { path: '/admin/settings', label: 'Settings', icon: MessageSquare },
+  { path: '/admin/payments', label: 'Payments', icon: DollarSign },
+  { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {

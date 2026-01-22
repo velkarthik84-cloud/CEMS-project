@@ -14,9 +14,13 @@ import {
   Save,
   Camera,
   Phone,
-  Building
+  Building,
+  Database,
+  CheckCircle,
+  AlertCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { seedDepartments, sampleDepartments } from '../../utils/seedData';
 
 const Settings = () => {
   const { user, userProfile, updateUserProfile } = useAuth();
@@ -51,12 +55,36 @@ const Settings = () => {
     reset: resetPassword,
   } = useForm();
 
+  const [seeding, setSeeding] = useState(false);
+  const [seedResults, setSeedResults] = useState(null);
+
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'payment', label: 'Payment', icon: CreditCard },
+    { id: 'developer', label: 'Developer', icon: Database },
   ];
+
+  const handleSeedDepartments = async () => {
+    setSeeding(true);
+    setSeedResults(null);
+    try {
+      const results = await seedDepartments();
+      setSeedResults(results);
+      const successCount = results.filter(r => r.success).length;
+      if (successCount > 0) {
+        toast.success(`Created ${successCount} department(s) successfully!`);
+      } else {
+        toast.info('All departments already exist');
+      }
+    } catch (error) {
+      console.error('Error seeding:', error);
+      toast.error('Failed to seed data');
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const onProfileSubmit = async (data) => {
     setSaving(true);
@@ -522,6 +550,109 @@ const Settings = () => {
             <button style={{ ...buttonStyle, backgroundColor: '#FFFFFF', color: '#64748B', border: '1px solid #E2E8F0', opacity: 0.6, cursor: 'not-allowed' }} disabled>
               Manage in Razorpay Dashboard
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Developer Tab */}
+      {activeTab === 'developer' && (
+        <div style={cardStyle}>
+          <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1E293B', marginBottom: '1.5rem' }}>
+            Developer Tools
+          </h2>
+
+          {/* Seed Departments */}
+          <div style={{ padding: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '0.75rem', marginBottom: '1.5rem' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.5rem' }}>
+              Seed Test Departments
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', margin: '0 0 1rem' }}>
+              Create sample department accounts for testing. This will create 5 departments with predefined credentials.
+            </p>
+
+            {/* Sample Departments Preview */}
+            <div style={{ marginBottom: '1rem', maxHeight: '200px', overflowY: 'auto' }}>
+              <table style={{ width: '100%', fontSize: '0.8125rem', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #E2E8F0' }}>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', color: '#64748B', fontWeight: '500' }}>Department</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', color: '#64748B', fontWeight: '500' }}>Username</th>
+                    <th style={{ padding: '0.5rem', textAlign: 'left', color: '#64748B', fontWeight: '500' }}>Password</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sampleDepartments.map((dept, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #E2E8F0' }}>
+                      <td style={{ padding: '0.5rem', color: '#1E293B' }}>{dept.code}</td>
+                      <td style={{ padding: '0.5rem', color: '#1E293B', fontFamily: 'monospace' }}>{dept.username}</td>
+                      <td style={{ padding: '0.5rem', color: '#1E293B', fontFamily: 'monospace' }}>{dept.password}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              onClick={handleSeedDepartments}
+              disabled={seeding}
+              style={{
+                ...buttonStyle,
+                backgroundColor: seeding ? '#94A3B8' : '#1E3A5F',
+                opacity: seeding ? 0.7 : 1,
+                cursor: seeding ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <Database style={{ width: '1rem', height: '1rem' }} />
+              {seeding ? 'Creating...' : 'Create Test Departments'}
+            </button>
+
+            {/* Results */}
+            {seedResults && (
+              <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#FFFFFF', borderRadius: '0.5rem', border: '1px solid #E2E8F0' }}>
+                <p style={{ fontSize: '0.8125rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.5rem' }}>Results:</p>
+                {seedResults.map((result, idx) => (
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    {result.success ? (
+                      <CheckCircle style={{ width: '0.875rem', height: '0.875rem', color: '#10B981' }} />
+                    ) : (
+                      <AlertCircle style={{ width: '0.875rem', height: '0.875rem', color: '#F59E0B' }} />
+                    )}
+                    <span style={{ fontSize: '0.8125rem', color: result.success ? '#10B981' : '#F59E0B' }}>
+                      {result.department}: {result.success ? 'Created' : result.reason}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Login URLs */}
+          <div style={{ padding: '1.25rem', backgroundColor: '#F8FAFC', borderRadius: '0.75rem' }}>
+            <h3 style={{ fontSize: '0.9375rem', fontWeight: '600', color: '#1E293B', margin: '0 0 0.5rem' }}>
+              Login URLs
+            </h3>
+            <p style={{ fontSize: '0.875rem', color: '#64748B', margin: '0 0 1rem' }}>
+              Quick access to different panel login pages
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                { label: 'Admin Login', url: '/login' },
+                { label: 'Department Login', url: '/department/login' },
+                { label: 'Judge Login', url: '/judge/login' },
+              ].map((item) => (
+                <div key={item.url} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: '#FFFFFF', borderRadius: '0.5rem', border: '1px solid #E2E8F0' }}>
+                  <span style={{ fontSize: '0.875rem', color: '#1E293B' }}>{item.label}</span>
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: '0.8125rem', color: '#E91E63', textDecoration: 'none', fontFamily: 'monospace' }}
+                  >
+                    {item.url}
+                  </a>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -43,6 +43,8 @@ export const ATTENDANCE_STATUS = {
 export const USER_ROLES = {
   ADMIN: 'admin',
   USER: 'user',
+  DEPARTMENT: 'department',
+  JUDGE: 'judge',
 };
 
 // Default Admin Emails (these emails will automatically get admin role)
@@ -62,12 +64,26 @@ export const REGISTRATION_STATUS = {
 export const ADMIN_NAV_ITEMS = [
   { path: '/admin', label: 'Dashboard', icon: 'LayoutDashboard' },
   { path: '/admin/events', label: 'Events', icon: 'Calendar' },
-  { path: '/admin/events/create', label: 'Create Event', icon: 'PlusCircle' },
+  { path: '/admin/departments', label: 'Departments', icon: 'Building2' },
+  { path: '/admin/registrations', label: 'Registrations', icon: 'ClipboardList' },
   { path: '/admin/participants', label: 'Participants', icon: 'Users' },
   { path: '/admin/attendance', label: 'Attendance', icon: 'UserCheck' },
+  { path: '/admin/winners', label: 'Winners', icon: 'Trophy' },
+  { path: '/admin/certificates', label: 'Certificates', icon: 'Award' },
   { path: '/admin/payments', label: 'Payments', icon: 'CreditCard' },
   { path: '/admin/analytics', label: 'Analytics', icon: 'BarChart3' },
   { path: '/admin/settings', label: 'Settings', icon: 'Settings' },
+];
+
+// Department Navigation Items
+export const DEPARTMENT_NAV_ITEMS = [
+  { path: '/department/dashboard', label: 'Dashboard', icon: 'LayoutDashboard' },
+  { path: '/department/events', label: 'View Events', icon: 'Calendar' },
+  { path: '/department/register', label: 'Register Students', icon: 'UserPlus' },
+  { path: '/department/registrations', label: 'My Registrations', icon: 'ClipboardList' },
+  { path: '/department/live-scores', label: 'Live Scores', icon: 'BarChart3' },
+  { path: '/department/results', label: 'Results & Winners', icon: 'Trophy' },
+  { path: '/department/certificates', label: 'Certificates', icon: 'Award' },
 ];
 
 // Date Format

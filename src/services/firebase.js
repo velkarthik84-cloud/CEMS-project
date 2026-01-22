@@ -37,14 +37,14 @@ import {
   deleteObject
 } from 'firebase/storage';
 
-// Firebase configuration
+// Firebase configuration - using environment variables with fallbacks for development
 const firebaseConfig = {
-  apiKey: "AIzaSyCM5NqpBXsHas3u53yui5-iztfCdOBrDKI",
-  authDomain: "event-management-b3563.firebaseapp.com",
-  projectId: "event-management-b3563",
-  storageBucket: "event-management-b3563.firebasestorage.app",
-  messagingSenderId: "925590840938",
-  appId: "1:925590840938:web:68d0c2a1bbdefbc3e64c13"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCM5NqpBXsHas3u53yui5-iztfCdOBrDKI",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "event-management-b3563.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "event-management-b3563",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "event-management-b3563.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "925590840938",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:925590840938:web:68d0c2a1bbdefbc3e64c13"
 };
 
 // Initialize Firebase
