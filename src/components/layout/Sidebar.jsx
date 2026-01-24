@@ -5,14 +5,12 @@ import {
   FileText,
   CalendarDays,
   Ticket,
-  DollarSign,
   ChevronLeft,
   X,
   Award,
   Building2,
   ClipboardList,
   Trophy,
-  BarChart3,
   Settings,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -26,8 +24,6 @@ const navItems = [
   { path: '/admin/attendance', label: 'Attendance', icon: CalendarDays },
   { path: '/admin/winners', label: 'Winners', icon: Trophy },
   { path: '/admin/certificates', label: 'Certificates', icon: Award },
-  { path: '/admin/payments', label: 'Payments', icon: DollarSign },
-  { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

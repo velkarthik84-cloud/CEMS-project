@@ -8,12 +8,13 @@ import {
   Clock,
   MapPin,
   Users,
-  CreditCard,
   Image as ImageIcon,
   Save,
   ArrowLeft,
   Eye,
-  Globe
+  Globe,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import {
   Button,
@@ -21,7 +22,6 @@ import {
   Select,
   Textarea,
   Card,
-  Toggle,
   FileUpload
 } from '../../components/common';
 import { PageLoader } from '../../components/common/Loading';
@@ -37,8 +37,7 @@ const EditEvent = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [bannerImage, setBannerImage] = useState(null);
-  const [isFree, setIsFree] = useState(true);
-  const [mandatoryPayment, setMandatoryPayment] = useState(true);
+  const [eventRoles, setEventRoles] = useState([]);
 
   const {
     register,
@@ -74,11 +73,18 @@ const EditEvent = () => {
         setValue('endTime', eventData.endTime);
         setValue('registrationStart', formatDateForInput(eventData.registrationStart));
         setValue('registrationEnd', formatDateForInput(eventData.registrationEnd));
-        setValue('maxParticipants', eventData.maxParticipants?.toString());
-        setValue('fee', eventData.fee?.toString() || '0');
 
-        setIsFree(eventData.isFree ?? eventData.fee === 0);
-        setMandatoryPayment(eventData.mandatoryPayment ?? true);
+        // Load event roles
+        if (eventData.eventRoles && Array.isArray(eventData.eventRoles)) {
+          setEventRoles(eventData.eventRoles.map(r => ({
+            id: r.id || Date.now() + Math.random(),
+            roleName: r.roleName || '',
+            personName: r.personName || '',
+            email: r.email || '',
+            phone: r.phone || '',
+          })));
+        }
+
         if (eventData.bannerUrl) {
           setBannerImage(eventData.bannerUrl);
         }
@@ -100,6 +106,28 @@ const EditEvent = () => {
     return format(date, 'yyyy-MM-dd');
   };
 
+  // Event Role functions
+  const addEventRole = () => {
+    const newRole = {
+      id: Date.now(),
+      roleName: '',
+      personName: '',
+      email: '',
+      phone: '',
+    };
+    setEventRoles([...eventRoles, newRole]);
+  };
+
+  const updateEventRole = (id, field, value) => {
+    setEventRoles(eventRoles.map(role =>
+      role.id === id ? { ...role, [field]: value } : role
+    ));
+  };
+
+  const removeEventRole = (id) => {
+    setEventRoles(eventRoles.filter(role => role.id !== id));
+  };
+
   const onSubmit = async (data) => {
     setSaving(true);
     try {
@@ -112,6 +140,9 @@ const EditEvent = () => {
           `events/banners/${eventId}-${Date.now()}`
         );
       }
+
+      // Validate event roles
+      const validEventRoles = eventRoles.filter(r => r.roleName && r.personName);
 
       const updateData = {
         title: data.title,
@@ -126,10 +157,13 @@ const EditEvent = () => {
         endTime: data.endTime,
         registrationStart: new Date(data.registrationStart),
         registrationEnd: new Date(data.registrationEnd),
-        maxParticipants: parseInt(data.maxParticipants),
-        fee: isFree ? 0 : parseFloat(data.fee) || 0,
-        isFree,
-        mandatoryPayment: !isFree && mandatoryPayment,
+        eventRoles: validEventRoles.map(r => ({
+          id: r.id.toString(),
+          roleName: r.roleName,
+          personName: r.personName,
+          email: r.email || '',
+          phone: r.phone || '',
+        })),
         updatedAt: serverTimestamp(),
       };
 
@@ -359,53 +393,95 @@ const EditEvent = () => {
           </div>
         </Card>
 
-        {/* Capacity & Pricing */}
+        {/* Event Roles */}
         <Card>
-          <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
-            Capacity & Pricing
-          </h2>
-          <div className="space-y-4">
-            <Input
-              label="Maximum Participants"
-              type="number"
-              required
-              {...register('maxParticipants')}
-            />
-
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-text-primary">Free Event</p>
-                <p className="text-sm text-text-secondary">
-                  Toggle off to set a registration fee
-                </p>
-              </div>
-              <Toggle checked={isFree} onChange={setIsFree} />
-            </div>
-
-            {!isFree && (
-              <>
-                <Input
-                  label="Registration Fee"
-                  type="number"
-                  icon={CreditCard}
-                  {...register('fee')}
-                />
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-text-primary">Mandatory Payment</p>
-                    <p className="text-sm text-text-secondary">
-                      Require payment before confirming registration
-                    </p>
-                  </div>
-                  <Toggle
-                    checked={mandatoryPayment}
-                    onChange={setMandatoryPayment}
-                  />
-                </div>
-              </>
-            )}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-text-primary flex items-center gap-2">
+              <Users className="w-5 h-5 text-primary" />
+              Event Roles
+            </h2>
+            <button
+              type="button"
+              onClick={addEventRole}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary hover:text-white transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add Role
+            </button>
           </div>
+
+          {eventRoles.length === 0 ? (
+            <div className="p-8 text-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+              <Users className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+              <p className="text-sm text-gray-500">
+                No roles added yet. Click "Add Role" to assign roles for this event.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {eventRoles.map((role, index) => (
+                <div
+                  key={role.id}
+                  className="p-4 bg-gray-50 rounded-xl border border-gray-200"
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-sm font-semibold text-gray-800">
+                      Role {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeEventRole(role.id)}
+                      className="p-1.5 rounded-md bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Role Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Coordinator, Organizer"
+                        value={role.roleName}
+                        onChange={(e) => updateEventRole(role.id, 'roleName', e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Person Name *</label>
+                      <input
+                        type="text"
+                        placeholder="Full name"
+                        value={role.personName}
+                        onChange={(e) => updateEventRole(role.id, 'personName', e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        placeholder="email@example.com"
+                        value={role.email}
+                        onChange={(e) => updateEventRole(role.id, 'email', e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        placeholder="Phone number"
+                        value={role.phone}
+                        onChange={(e) => updateEventRole(role.id, 'phone', e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         {/* Banner Image */}

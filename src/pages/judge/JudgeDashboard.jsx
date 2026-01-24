@@ -161,8 +161,8 @@ const JudgeDashboard = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('judgeSession');
-    navigate('/judge/login');
     toast.success('Logged out successfully');
+    navigate('/judge/login', { replace: true });
   };
 
   const handleCriteriaScoreChange = (participantId, criteriaId, value) => {
@@ -283,6 +283,46 @@ const JudgeDashboard = () => {
       })
       .filter(p => p.myScore > 0)
       .sort((a, b) => b.myScore - a.myScore);
+  };
+
+  // Access control helpers for scoring
+  const canScore = (participant) => {
+    const isApproved = participant.status === 'approved';
+    const isCheckedIn = participant.attendanceStatus === 'checked_in';
+    return isApproved && isCheckedIn;
+  };
+
+  const getAccessMessage = (participant) => {
+    if (participant.status !== 'approved') {
+      return 'Registration pending admin approval';
+    }
+    if (participant.attendanceStatus !== 'checked_in') {
+      return 'Participant has not checked in yet';
+    }
+    return null;
+  };
+
+  // Group participants by department
+  const groupByDepartment = (participantsList) => {
+    return participantsList.reduce((groups, participant) => {
+      const dept = participant.departmentName || 'Unknown Department';
+      if (!groups[dept]) {
+        groups[dept] = {
+          departmentName: dept,
+          departmentCode: participant.departmentCode || '',
+          participants: [],
+          totalScore: 0,
+        };
+      }
+      groups[dept].participants.push(participant);
+
+      // Calculate department total score from this judge
+      const myScore = participant.judgeScores?.[judgeSession?.judgeId]?.totalScore ||
+                     participant.scores?.[judgeSession?.judgeId] || 0;
+      groups[dept].totalScore += myScore;
+
+      return groups;
+    }, {});
   };
 
   const sidebarItems = [
@@ -1081,6 +1121,8 @@ const JudgeDashboard = () => {
             const totalScore = calculateTotalScore(participant.id);
             const participantScores = scores[participant.id] || {};
             const percentage = Math.round((totalScore / getMaxTotalScore()) * 100);
+            const canScoreParticipant = canScore(participant);
+            const accessMessage = getAccessMessage(participant);
 
             return (
               <div
@@ -1090,11 +1132,29 @@ const JudgeDashboard = () => {
                   borderRadius: '1rem',
                   padding: '1.5rem',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                  border: isSubmitted ? '2px solid #10B981' : '2px solid transparent',
+                  border: isSubmitted ? '2px solid #10B981' : !canScoreParticipant ? '2px solid #F59E0B' : '2px solid transparent',
                   opacity: isSubmitted ? 0.85 : 1,
                   transition: 'all 0.3s ease',
                 }}
               >
+                {/* Access Restriction Alert */}
+                {!canScoreParticipant && !isSubmitted && (
+                  <div style={{
+                    padding: '1rem',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    borderRadius: '0.5rem',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                  }}>
+                    <AlertCircle style={{ width: '1.25rem', height: '1.25rem', color: '#F59E0B', flexShrink: 0 }} />
+                    <span style={{ fontSize: '0.9375rem', color: '#92400E' }}>
+                      {accessMessage}
+                    </span>
+                  </div>
+                )}
+
                 {/* Header */}
                 <div style={{
                   display: 'flex',
@@ -1172,11 +1232,11 @@ const JudgeDashboard = () => {
                         placeholder="0"
                         value={participantScores[criteria.id] || ''}
                         onChange={(e) => handleCriteriaScoreChange(participant.id, criteria.id, e.target.value)}
-                        disabled={isSubmitted}
+                        disabled={isSubmitted || !canScoreParticipant}
                         style={{
                           width: '100%',
                           padding: '0.75rem 1rem',
-                          backgroundColor: isSubmitted ? '#F1F5F9' : '#F8FAFC',
+                          backgroundColor: (isSubmitted || !canScoreParticipant) ? '#F1F5F9' : '#F8FAFC',
                           border: '2px solid #E2E8F0',
                           borderRadius: '0.625rem',
                           fontSize: '1rem',
@@ -1184,10 +1244,10 @@ const JudgeDashboard = () => {
                           color: '#1E293B',
                           textAlign: 'center',
                           outline: 'none',
-                          cursor: isSubmitted ? 'not-allowed' : 'text',
+                          cursor: (isSubmitted || !canScoreParticipant) ? 'not-allowed' : 'text',
                           transition: 'border-color 0.2s',
                         }}
-                        onFocus={(e) => !isSubmitted && (e.target.style.borderColor = '#E91E63')}
+                        onFocus={(e) => !isSubmitted && canScoreParticipant && (e.target.style.borderColor = '#E91E63')}
                         onBlur={(e) => e.target.style.borderColor = '#E2E8F0'}
                       />
                     </div>
@@ -1212,11 +1272,11 @@ const JudgeDashboard = () => {
                     placeholder="Add any remarks or feedback for this participant..."
                     value={remarks[participant.id] || ''}
                     onChange={(e) => handleRemarksChange(participant.id, e.target.value)}
-                    disabled={isSubmitted}
+                    disabled={isSubmitted || !canScoreParticipant}
                     style={{
                       width: '100%',
                       padding: '0.875rem 1rem',
-                      backgroundColor: isSubmitted ? '#F1F5F9' : '#F8FAFC',
+                      backgroundColor: (isSubmitted || !canScoreParticipant) ? '#F1F5F9' : '#F8FAFC',
                       border: '2px solid #E2E8F0',
                       borderRadius: '0.625rem',
                       fontSize: '0.9375rem',
@@ -1225,7 +1285,7 @@ const JudgeDashboard = () => {
                       resize: 'vertical',
                       fontFamily: 'inherit',
                       outline: 'none',
-                      cursor: isSubmitted ? 'not-allowed' : 'text',
+                      cursor: (isSubmitted || !canScoreParticipant) ? 'not-allowed' : 'text',
                     }}
                   />
                 </div>
@@ -1246,6 +1306,21 @@ const JudgeDashboard = () => {
                     }}>
                       <Lock style={{ width: '1rem', height: '1rem' }} />
                       Score Submitted & Locked
+                    </div>
+                  ) : !canScoreParticipant ? (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.75rem 1.5rem',
+                      background: 'rgba(245, 158, 11, 0.1)',
+                      color: '#D97706',
+                      borderRadius: '0.625rem',
+                      fontSize: '0.9375rem',
+                      fontWeight: '600',
+                    }}>
+                      <AlertCircle style={{ width: '1rem', height: '1rem' }} />
+                      Scoring Restricted
                     </div>
                   ) : (
                     <>
@@ -1851,8 +1926,36 @@ const JudgeDashboard = () => {
           })}
         </nav>
 
-       
-        
+        {/* Logout Button */}
+        <div style={{ padding: '1rem', borderTop: '1px solid #F1F5F9' }}>
+          <button
+            onClick={handleLogout}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.875rem 1rem',
+              width: '100%',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: '#EF4444',
+              border: 'none',
+              borderRadius: '0.75rem',
+              cursor: 'pointer',
+              fontSize: '0.9375rem',
+              fontWeight: '600',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+            }}
+          >
+            <LogOut style={{ width: '1.25rem', height: '1.25rem' }} />
+            Logout
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}

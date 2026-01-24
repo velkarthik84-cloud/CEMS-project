@@ -6,7 +6,6 @@ import {
   Search,
   Edit,
   Trash2,
-  Eye,
   Copy,
   Users,
   MoreVertical,
@@ -370,14 +369,6 @@ const ManageEvents = () => {
                     </td>
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem', position: 'relative' }}>
-                        <Link to={`/events/${event.id}`} target="_blank">
-                          <button style={actionBtnStyle} title="Preview"
-                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F1F5F9'}
-                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                          >
-                            <Eye style={{ width: '1rem', height: '1rem', color: '#64748B' }} />
-                          </button>
-                        </Link>
                         <button
                           style={actionBtnStyle}
                           title="QR Code & Link"

@@ -373,35 +373,37 @@ const Winners = () => {
                 Clear Winners
               </button>
             )}
-            <button
-              onClick={generateWinners}
-              disabled={generating || rankedParticipants.length === 0}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: '0.75rem 1.25rem',
-                backgroundColor: generating ? '#94A3B8' : '#E91E63',
-                color: '#FFFFFF',
-                border: 'none',
-                borderRadius: '0.5rem',
-                cursor: generating ? 'not-allowed' : 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-              }}
-            >
-              {generating ? (
-                <>
-                  <RefreshCw style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Trophy style={{ width: '1rem', height: '1rem' }} />
-                  Generate Winners
-                </>
-              )}
-            </button>
+            {existingWinners.length === 0 && (
+              <button
+                onClick={generateWinners}
+                disabled={generating || rankedParticipants.length === 0}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.75rem 1.25rem',
+                  backgroundColor: generating ? '#94A3B8' : '#E91E63',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  cursor: generating ? 'not-allowed' : 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                }}
+              >
+                {generating ? (
+                  <>
+                    <RefreshCw style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Trophy style={{ width: '1rem', height: '1rem' }} />
+                    Generate Winners
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

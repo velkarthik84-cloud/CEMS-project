@@ -11,7 +11,6 @@ import {
   Clock,
   MapPin,
   Users,
-  CreditCard,
   Image as ImageIcon,
   Save,
   ArrowLeft,
@@ -41,8 +40,6 @@ const eventSchema = z.object({
   endTime: z.string().min(1, 'End time is required'),
   registrationStart: z.string().min(1, 'Registration start date is required'),
   registrationEnd: z.string().min(1, 'Registration end date is required'),
-  maxParticipants: z.string().min(1, 'Maximum participants is required'),
-  fee: z.string().optional(),
 });
 
 const CreateEvent = () => {
@@ -51,13 +48,14 @@ const CreateEvent = () => {
   const [loading, setLoading] = useState(false);
   const [bannerImage, setBannerImage] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
-  const [isFree, setIsFree] = useState(true);
-  const [mandatoryPayment, setMandatoryPayment] = useState(true);
   const [qrModal, setQrModal] = useState({ open: false, eventId: null, eventTitle: '' });
 
   // Judges state
   const [judges, setJudges] = useState([]);
   const [showPassword, setShowPassword] = useState({});
+
+  // Event Roles state
+  const [eventRoles, setEventRoles] = useState([]);
 
   // Category-specific fields state
   const [categoryFields, setCategoryFields] = useState({
@@ -183,6 +181,28 @@ const CreateEvent = () => {
     setShowPassword(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
+  // Event Role functions
+  const addEventRole = () => {
+    const newRole = {
+      id: Date.now(),
+      roleName: '',
+      personName: '',
+      email: '',
+      phone: '',
+    };
+    setEventRoles([...eventRoles, newRole]);
+  };
+
+  const updateEventRole = (id, field, value) => {
+    setEventRoles(eventRoles.map(role =>
+      role.id === id ? { ...role, [field]: value } : role
+    ));
+  };
+
+  const removeEventRole = (id) => {
+    setEventRoles(eventRoles.filter(role => role.id !== id));
+  };
+
   const onSubmit = async (data) => {
     setLoading(true);
     try {
@@ -265,6 +285,9 @@ const CreateEvent = () => {
         }
       };
 
+      // Validate event roles
+      const validEventRoles = eventRoles.filter(r => r.roleName && r.personName);
+
       const eventData = {
         title: data.title,
         description: data.description,
@@ -278,17 +301,20 @@ const CreateEvent = () => {
         endTime: data.endTime,
         registrationStart: new Date(data.registrationStart),
         registrationEnd: new Date(data.registrationEnd),
-        maxParticipants: parseInt(data.maxParticipants),
         currentCount: 0,
-        fee: isFree ? 0 : parseFloat(data.fee) || 0,
-        isFree,
-        mandatoryPayment: !isFree && mandatoryPayment,
         judges: validJudges.map(j => ({
           id: j.id.toString(),
           name: j.name,
           username: j.username,
           password: j.password,
           email: j.email || '',
+        })),
+        eventRoles: validEventRoles.map(r => ({
+          id: r.id.toString(),
+          roleName: r.roleName,
+          personName: r.personName,
+          email: r.email || '',
+          phone: r.phone || '',
         })),
         categoryDetails: getCategorySpecificData(),
         status: 'draft',
@@ -1155,64 +1181,117 @@ const CreateEvent = () => {
           </div>
         </div>
 
-        {/* Capacity & Pricing */}
+        {/* Event Roles */}
         <div style={cardStyle}>
-          <h2 style={sectionTitleStyle}>
-            <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
-            Capacity & Pricing
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div>
-              <label style={labelStyle}>Maximum Participants *</label>
-              <input
-                type="number"
-                placeholder="100"
-                style={inputStyle}
-                {...register('maxParticipants')}
-              />
-              {errors.maxParticipants && <p style={errorStyle}>{errors.maxParticipants.message}</p>}
-            </div>
-
-            <div style={toggleBoxStyle}>
-              <div>
-                <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Free Event</p>
-                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
-                  Toggle off to set a registration fee
-                </p>
-              </div>
-              <button type="button" style={toggleBtnStyle(isFree)} onClick={() => setIsFree(!isFree)}>
-                <span style={toggleKnobStyle(isFree)} />
-              </button>
-            </div>
-
-            {!isFree && (
-              <>
-                <div>
-                  <label style={labelStyle}>Registration Fee (₹)</label>
-                  <div style={{ position: 'relative' }}>
-                    <CreditCard style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', width: '1.25rem', height: '1.25rem', color: '#64748B' }} />
-                    <input
-                      type="number"
-                      placeholder="500"
-                      style={{ ...inputStyle, paddingLeft: '2.5rem' }}
-                      {...register('fee')}
-                    />
-                  </div>
-                </div>
-                <div style={toggleBoxStyle}>
-                  <div>
-                    <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>Mandatory Payment</p>
-                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: '0.25rem 0 0' }}>
-                      Require payment before confirming registration
-                    </p>
-                  </div>
-                  <button type="button" style={toggleBtnStyle(mandatoryPayment)} onClick={() => setMandatoryPayment(!mandatoryPayment)}>
-                    <span style={toggleKnobStyle(mandatoryPayment)} />
-                  </button>
-                </div>
-              </>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+            <h2 style={{ ...sectionTitleStyle, marginBottom: 0 }}>
+              <Users style={{ width: '1.25rem', height: '1.25rem', color: '#E91E63' }} />
+              Event Roles
+            </h2>
+            <button
+              type="button"
+              onClick={addEventRole}
+              style={{
+                ...outlineButtonStyle,
+                padding: '0.5rem 1rem',
+                fontSize: '0.8125rem',
+              }}
+            >
+              <Plus style={{ width: '1rem', height: '1rem' }} />
+              Add Role
+            </button>
           </div>
+
+          {eventRoles.length === 0 ? (
+            <div style={{
+              padding: '2rem',
+              textAlign: 'center',
+              backgroundColor: '#F8FAFC',
+              borderRadius: '0.75rem',
+              border: '2px dashed #E2E8F0',
+            }}>
+              <Users style={{ width: '2.5rem', height: '2.5rem', color: '#CBD5E1', margin: '0 auto 0.75rem' }} />
+              <p style={{ fontSize: '0.875rem', color: '#64748B', margin: 0 }}>
+                No roles added yet. Click "Add Role" to assign roles for this event.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {eventRoles.map((role, index) => (
+                <div
+                  key={role.id}
+                  style={{
+                    padding: '1rem',
+                    backgroundColor: '#F8FAFC',
+                    borderRadius: '0.75rem',
+                    border: '1px solid #E2E8F0',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#1E293B' }}>
+                      Role {index + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeEventRole(role.id)}
+                      style={{
+                        padding: '0.375rem',
+                        borderRadius: '0.375rem',
+                        border: 'none',
+                        backgroundColor: '#FEE2E2',
+                        color: '#DC2626',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Trash2 style={{ width: '1rem', height: '1rem' }} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: '0.75rem' }}>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.75rem' }}>Role Name *</label>
+                      <input
+                        type="text"
+                        placeholder="e.g., Coordinator, Organizer"
+                        value={role.roleName}
+                        onChange={(e) => updateEventRole(role.id, 'roleName', e.target.value)}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.75rem' }}>Person Name *</label>
+                      <input
+                        type="text"
+                        placeholder="Full name"
+                        value={role.personName}
+                        onChange={(e) => updateEventRole(role.id, 'personName', e.target.value)}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.75rem' }}>Email</label>
+                      <input
+                        type="email"
+                        placeholder="email@example.com"
+                        value={role.email}
+                        onChange={(e) => updateEventRole(role.id, 'email', e.target.value)}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, fontSize: '0.75rem' }}>Phone</label>
+                      <input
+                        type="tel"
+                        placeholder="Phone number"
+                        value={role.phone}
+                        onChange={(e) => updateEventRole(role.id, 'phone', e.target.value)}
+                        style={inputStyle}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Judges Section */}

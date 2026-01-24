@@ -103,9 +103,9 @@ function App() {
             <Route path="participants" element={<Participants />} />
             <Route path="participants/:participantId" element={<ParticipantDetails />} />
             <Route path="attendance" element={<Attendance />} />
-            <Route path="payments" element={<Payments />} />
+            {/* <Route path="payments" element={<Payments />} /> */}
             <Route path="certificates" element={<Certificates />} />
-            <Route path="analytics" element={<Analytics />} />
+            {/* <Route path="analytics" element={<Analytics />} /> */}
             <Route path="settings" element={<Settings />} />
             <Route path="departments" element={<Departments />} />
             <Route path="registrations" element={<Registrations />} />
@@ -118,11 +118,11 @@ function App() {
 
           {/* Department Routes */}
           <Route path="/department/login" element={<DepartmentLogin />} />
+          <Route path="/department/register" element={<StudentRegistration />} />
           <Route path="/department" element={<DepartmentLayout />}>
             <Route index element={<Navigate to="/department/dashboard" replace />} />
             <Route path="dashboard" element={<DepartmentDashboard />} />
             <Route path="events" element={<DepartmentEvents />} />
-            <Route path="register" element={<StudentRegistration />} />
             <Route path="registrations" element={<MyRegistrations />} />
             <Route path="live-scores" element={<LiveScores />} />
             <Route path="results" element={<DepartmentResults />} />
