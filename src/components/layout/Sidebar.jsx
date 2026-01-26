@@ -20,6 +20,7 @@ const navItems = [
   { path: '/admin/events', label: 'Events', icon: Ticket },
   { path: '/admin/departments', label: 'Departments', icon: Building2 },
   { path: '/admin/registrations', label: 'Registrations', icon: ClipboardList },
+  { path: '/admin/judges', label: 'Judges', icon: Ticket },
   { path: '/admin/participants', label: 'Participants', icon: FileText },
   { path: '/admin/attendance', label: 'Attendance', icon: CalendarDays },
   { path: '/admin/winners', label: 'Winners', icon: Trophy },
@@ -213,7 +214,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           </div>
           {!collapsed && (
             <div style={{ overflow: 'hidden' }}>
-              <span style={{ fontWeight: '700', fontSize: '1.375rem', color: '#1E293B', letterSpacing: '-0.025em' }}>Ventixe</span>
+              <span style={{ fontWeight: '700', fontSize: '1.375rem', color: '#1E293B', letterSpacing: '-0.025em' }}>CEMS</span>
               <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Hello {userProfile?.displayName?.split(' ')[0] || 'Admin'}!
               </p>

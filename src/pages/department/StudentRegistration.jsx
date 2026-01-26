@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, doc, updateDoc, increment, getDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../services/firebase';
 import {
@@ -22,6 +21,21 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
+
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  getDoc,
+  addDoc,
+  doc,
+  updateDoc,
+  increment,
+  serverTimestamp,
+  runTransaction,
+} from 'firebase/firestore';
+
 
 const StudentRegistration = () => {
   const [searchParams] = useSearchParams();
@@ -182,96 +196,148 @@ const StudentRegistration = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (!validateForm()) return;
+  if (!validateForm()) return;
+  if (!selectedEvent || !departmentSession) {
+    toast.error('Invalid event or department session');
+    return;
+  }
 
-    setSubmitting(true);
-    try {
-      // Check if already registered
-      const registrationsRef = collection(db, 'registrations');
-      const existingQuery = query(
+  setSubmitting(true);
+
+  try {
+    const registrationsRef = collection(db, 'registrations');
+    const eventRef = doc(db, 'events', selectedEvent.id);
+
+    // Normalize register numbers
+    const regNos = students.map(s =>
+      s.registerNumber.trim().toUpperCase()
+    );
+
+    // ❌ Duplicate inside form
+    if (new Set(regNos).size !== regNos.length) {
+      throw new Error('Duplicate register numbers found');
+    }
+
+    // ❌ Same department already registered
+    const deptSnap = await getDocs(
+      query(
         registrationsRef,
         where('eventId', '==', selectedEvent.id),
         where('departmentId', '==', departmentSession.departmentId)
-      );
-      const existingSnapshot = await getDocs(existingQuery);
+      )
+    );
 
-      if (!existingSnapshot.empty) {
-        toast.error('Your department has already registered for this event');
-        setSubmitting(false);
-        return;
+    if (!deptSnap.empty) {
+      throw new Error('Your department has already registered');
+    }
+
+    // ❌ Student already registered
+    const eventSnap = await getDocs(
+      query(registrationsRef, where('eventId', '==', selectedEvent.id))
+    );
+
+    for (const docSnap of eventSnap.docs) {
+      const existing = docSnap.data().students || [];
+      for (const s of existing) {
+        if (regNos.includes(s.registerNumber)) {
+          throw new Error(`Student ${s.registerNumber} already registered`);
+        }
+      }
+    }
+
+    // Upload file (outside transaction)
+    let performanceFileUrl = null;
+    let performanceFileName = null;
+
+    if (performanceFile) {
+      performanceFileUrl = await uploadPerformanceFile();
+      performanceFileName = performanceFile.name;
+    }
+
+    const registrationId = `REG-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 8)
+      .toUpperCase()}`;
+
+    // 🔐 TRANSACTION
+    await runTransaction(db, async (transaction) => {
+      const eventDoc = await transaction.get(eventRef);
+
+      if (!eventDoc.exists()) {
+        throw new Error('Event not found');
       }
 
-      // Check max participants
-      const eventRef = doc(db, 'events', selectedEvent.id);
-      const eventDoc = await getDoc(eventRef);
       const eventData = eventDoc.data();
+      const current = eventData.currentCount || 0;
+      const adding = students.length;
 
-      if (eventData.maxParticipants && eventData.currentCount >= eventData.maxParticipants) {
-        toast.error('This event has reached maximum participants');
-        setSubmitting(false);
-        return;
+      if (
+        eventData.maxParticipants &&
+        current + adding > eventData.maxParticipants
+      ) {
+        throw new Error('Event participant limit reached');
       }
 
-      // Upload performance file if exists
-      let performanceFileUrl = null;
-      if (performanceFile) {
-        performanceFileUrl = await uploadPerformanceFile();
-      }
+      const regDocRef = doc(registrationsRef);
 
-      // Generate registration ID
-      const registrationId = `REG-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-
-      // Create registration document
-      const registrationData = {
+      transaction.set(regDocRef, {
         registrationId,
         eventId: selectedEvent.id,
         eventTitle: selectedEvent.title,
         eventCategory: selectedEvent.category,
+
         departmentId: departmentSession.departmentId,
         departmentName: departmentSession.departmentName,
         departmentCode: departmentSession.departmentCode,
+
         students: students.map(s => ({
           name: s.name.trim(),
           registerNumber: s.registerNumber.trim().toUpperCase(),
+          departmentId: departmentSession.departmentId,
+          departmentName: departmentSession.departmentName,
+          departmentCode: departmentSession.departmentCode,
         })),
-        performanceDetails: selectedEvent.category === 'cultural' ? {
-          songName: performanceDetails.songName.trim(),
-          teamName: performanceDetails.teamName.trim() || null,
-          duration: performanceDetails.duration.trim() || null,
-          specialRequirements: performanceDetails.specialRequirements.trim() || null,
-          performanceFileUrl: performanceFileUrl,
-          performanceFileName: performanceFile?.name || null,
-        } : null,
+
+        studentCount: students.length,
+
+        performanceDetails:
+          selectedEvent.category === 'cultural'
+            ? {
+                songName: performanceDetails.songName || null,
+                teamName: performanceDetails.teamName || null,
+                duration: performanceDetails.duration || null,
+                specialRequirements:
+                  performanceDetails.specialRequirements || null,
+                performanceFileUrl,
+                performanceFileName,
+              }
+            : null,
+
         status: 'pending',
-        eventToken: null,
-        scores: {},
-        judgeScores: {},
-        totalScore: 0,
-        rank: null,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      await addDoc(registrationsRef, registrationData);
-
-      // Update event participant count
-      await updateDoc(eventRef, {
-        currentCount: increment(1),
         updatedAt: serverTimestamp(),
       });
 
-      toast.success('Registration submitted successfully!');
-      navigate('/department/registrations');
-    } catch (error) {
-      console.error('Error submitting registration:', error);
-      toast.error('Failed to submit registration');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      transaction.update(eventRef, {
+        currentCount: increment(adding), // ✅ FIX
+        updatedAt: serverTimestamp(),
+      });
+    });
+
+    toast.success('Registration submitted successfully!');
+    navigate('/department/registrations');
+
+  } catch (error) {
+    console.error(error);
+    toast.error(error.message || 'Registration failed');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const cardStyle = {
     backgroundColor: '#FFFFFF',
@@ -747,3 +813,345 @@ const StudentRegistration = () => {
 };
 
 export default StudentRegistration;
+
+
+// import { useState, useEffect } from 'react';
+// import { useSearchParams, useNavigate } from 'react-router-dom';
+// import {
+//   collection,
+//   query,
+//   where,
+//   getDocs,
+//   addDoc,
+//   serverTimestamp,
+//   doc,
+//   updateDoc,
+//   increment,
+//   getDoc,
+// } from 'firebase/firestore';
+// import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// import { db, storage } from '../../services/firebase';
+// import {
+//   UserPlus,
+//   Trash2,
+//   Plus,
+//   ChevronDown,
+//   Info,
+//   Upload,
+//   FileVideo,
+//   FileAudio,
+//   X,
+//   ArrowLeft,
+// } from 'lucide-react';
+// import toast from 'react-hot-toast';
+// import { format } from 'date-fns';
+
+// const StudentRegistration = () => {
+//   const [searchParams] = useSearchParams();
+//   const navigate = useNavigate();
+
+//   const [departmentSession, setDepartmentSession] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [submitting, setSubmitting] = useState(false);
+
+//   const [events, setEvents] = useState([]);
+//   const [selectedEvent, setSelectedEvent] = useState(null);
+//   const [showEventDropdown, setShowEventDropdown] = useState(false);
+
+//   const [students, setStudents] = useState([
+//     { fullName: '', registerNumber: '' },
+//   ]);
+
+//   const [performanceDetails, setPerformanceDetails] = useState({
+//     songName: '',
+//     teamName: '',
+//     duration: '',
+//     specialRequirements: '',
+//   });
+
+//   const [performanceFile, setPerformanceFile] = useState(null);
+
+//   /* ---------------- SESSION CHECK ---------------- */
+//   useEffect(() => {
+//     const session = sessionStorage.getItem('departmentSession');
+//     if (!session) {
+//       toast.error('Please login to continue');
+//       navigate('/department/login');
+//       return;
+//     }
+//     setDepartmentSession(JSON.parse(session));
+//   }, [navigate]);
+
+//   /* ---------------- FETCH EVENTS ---------------- */
+//   useEffect(() => {
+//     if (!departmentSession) return;
+
+//     const fetchEvents = async () => {
+//       try {
+//         const q = query(
+//           collection(db, 'events'),
+//           where('status', '==', 'published')
+//         );
+//         const snap = await getDocs(q);
+
+//         const now = new Date();
+//         const data = snap.docs
+//           .map(d => ({ id: d.id, ...d.data() }))
+//           .filter(e => {
+//             const d = e.eventDate?.toDate
+//               ? e.eventDate.toDate()
+//               : new Date(e.eventDate);
+//             return d >= now;
+//           })
+//           .sort((a, b) => {
+//             const da = a.eventDate.toDate();
+//             const dbb = b.eventDate.toDate();
+//             return da - dbb;
+//           });
+
+//         setEvents(data);
+
+//         const eventId = searchParams.get('eventId');
+//         if (eventId) {
+//           const ev = data.find(e => e.id === eventId);
+//           if (ev) setSelectedEvent(ev);
+//         }
+
+//         setLoading(false);
+//       } catch (err) {
+//         console.error(err);
+//         toast.error('Failed to load events');
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchEvents();
+//   }, [departmentSession, searchParams]);
+
+//   /* ---------------- STUDENT HANDLERS ---------------- */
+//   const handleStudentChange = (index, field, value) => {
+//     const updated = [...students];
+//     updated[index][field] = value;
+//     setStudents(updated);
+//   };
+
+//   const addStudent = () => {
+//     if (selectedEvent?.categoryDetails?.performanceType === 'solo') {
+//       toast.error('Solo events allow only one participant');
+//       return;
+//     }
+
+//     if (
+//       selectedEvent?.categoryDetails?.teamSize &&
+//       students.length >= selectedEvent.categoryDetails.teamSize
+//     ) {
+//       toast.error(
+//         `Maximum ${selectedEvent.categoryDetails.teamSize} participants allowed`
+//       );
+//       return;
+//     }
+
+//     setStudents([...students, { fullName: '', registerNumber: '' }]);
+//   };
+
+//   const removeStudent = index => {
+//     if (students.length === 1) {
+//       toast.error('At least one student is required');
+//       return;
+//     }
+//     setStudents(students.filter((_, i) => i !== index));
+//   };
+
+//   /* ---------------- FILE UPLOAD ---------------- */
+//   const handleFileChange = e => {
+//     const file = e.target.files[0];
+//     if (!file) return;
+
+//     const allowed = [
+//       'video/mp4',
+//       'video/quicktime',
+//       'video/webm',
+//       'audio/mpeg',
+//       'audio/mp3',
+//       'audio/wav',
+//       'audio/ogg',
+//     ];
+
+//     if (!allowed.includes(file.type)) {
+//       toast.error('Invalid file type');
+//       return;
+//     }
+
+//     if (file.size > 100 * 1024 * 1024) {
+//       toast.error('Max file size is 100MB');
+//       return;
+//     }
+
+//     setPerformanceFile(file);
+//   };
+
+//   const uploadPerformanceFile = async () => {
+//     if (!performanceFile) return null;
+
+//     const ext = performanceFile.name.split('.').pop();
+//     const path = `performances/${departmentSession.departmentId}/${selectedEvent.id}/${Date.now()}.${ext}`;
+//     const storageRef = ref(storage, path);
+
+//     const snap = await uploadBytes(storageRef, performanceFile);
+//     return await getDownloadURL(snap.ref);
+//   };
+
+//   /* ---------------- VALIDATION ---------------- */
+//   const validateForm = () => {
+//     if (!selectedEvent) {
+//       toast.error('Select an event');
+//       return false;
+//     }
+
+//     for (let i = 0; i < students.length; i++) {
+//       if (!students[i].fullName.trim()) {
+//         toast.error(`Enter full name for student ${i + 1}`);
+//         return false;
+//       }
+//       if (!students[i].registerNumber.trim()) {
+//         toast.error(`Enter register number for student ${i + 1}`);
+//         return false;
+//       }
+//     }
+
+//     return true;
+//   };
+
+//   /* ---------------- SUBMIT ---------------- */
+//   const handleSubmit = async e => {
+//     e.preventDefault();
+//     if (!validateForm()) return;
+
+//     setSubmitting(true);
+
+//     try {
+//       const regRef = collection(db, 'registrations');
+
+//       const existsQ = query(
+//         regRef,
+//         where('eventId', '==', selectedEvent.id),
+//         where('departmentId', '==', departmentSession.departmentId)
+//       );
+
+//       const existsSnap = await getDocs(existsQ);
+//       if (!existsSnap.empty) {
+//         toast.error('Already registered for this event');
+//         setSubmitting(false);
+//         return;
+//       }
+
+//       const eventRef = doc(db, 'events', selectedEvent.id);
+//       const eventSnap = await getDoc(eventRef);
+//       const eventData = eventSnap.data();
+
+//       if (
+//         eventData?.maxParticipants &&
+//         eventData.currentCount >= eventData.maxParticipants
+//       ) {
+//         toast.error('Event is full');
+//         setSubmitting(false);
+//         return;
+//       }
+
+//       const fileUrl = performanceFile
+//         ? await uploadPerformanceFile()
+//         : null;
+
+//       await addDoc(regRef, {
+//         registrationId: `REG-${Date.now()}`,
+//         eventId: selectedEvent.id,
+//         eventTitle: selectedEvent.title,
+//         eventCategory: selectedEvent.category,
+
+//         departmentId: departmentSession.departmentId,
+//         departmentName: departmentSession.departmentName,
+//         departmentCode: departmentSession.departmentCode,
+
+//         students: students.map(s => ({
+//           fullName: s.fullName.trim(),
+//           registerNumber: s.registerNumber.trim().toUpperCase(),
+//         })),
+
+//         performanceDetails:
+//           selectedEvent.category === 'cultural'
+//             ? {
+//                 ...performanceDetails,
+//                 performanceFileUrl: fileUrl,
+//                 performanceFileName: performanceFile?.name || null,
+//               }
+//             : null,
+
+//         status: 'pending',
+//         totalScore: 0,
+//         createdAt: serverTimestamp(),
+//         updatedAt: serverTimestamp(),
+//       });
+
+//       await updateDoc(eventRef, {
+//         currentCount: increment(1),
+//         updatedAt: serverTimestamp(),
+//       });
+
+//       toast.success('Registration successful');
+//       navigate('/department/registrations');
+//     } catch (err) {
+//       console.error(err);
+//       toast.error('Registration failed');
+//     } finally {
+//       setSubmitting(false);
+//     }
+//   };
+
+//   if (loading || !departmentSession) return null;
+
+//   /* ---------------- UI ---------------- */
+//   return (
+//     <form onSubmit={handleSubmit}>
+//       {students.map((student, index) => (
+//         <div key={index}>
+//           <input
+//             placeholder="Full Name"
+//             value={student.fullName}
+//             onChange={e =>
+//               handleStudentChange(index, 'fullName', e.target.value)
+//             }
+//           />
+//           <input
+//             placeholder="Register Number"
+//             value={student.registerNumber}
+//             onChange={e =>
+//               handleStudentChange(
+//                 index,
+//                 'registerNumber',
+//                 e.target.value.toUpperCase()
+//               )
+//             }
+//           />
+//           {students.length > 1 && (
+//             <button type="button" onClick={() => removeStudent(index)}>
+//               <Trash2 size={16} />
+//             </button>
+//           )}
+//         </div>
+//       ))}
+
+//       <button type="button" onClick={addStudent}>
+//         <Plus size={16} /> Add Student
+//       </button>
+
+//       <button type="submit" disabled={submitting}>
+//         <UserPlus size={16} />
+//         {submitting ? 'Submitting...' : 'Submit Registration'}
+//       </button>
+//     </form>
+//   );
+// };
+
+// export default StudentRegistration;
+
+

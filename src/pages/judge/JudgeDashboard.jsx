@@ -69,7 +69,7 @@ const JudgeDashboard = () => {
   useEffect(() => {
     const session = sessionStorage.getItem('judgeSession');
     if (!session) {
-      navigate('/judge/login');
+      navigate('/login');
       return;
     }
     const parsedSession = JSON.parse(session);
@@ -162,7 +162,7 @@ const JudgeDashboard = () => {
   const handleLogout = () => {
     sessionStorage.removeItem('judgeSession');
     toast.success('Logged out successfully');
-    navigate('/judge/login', { replace: true });
+    navigate('/login', { replace: true });
   };
 
   const handleCriteriaScoreChange = (participantId, criteriaId, value) => {

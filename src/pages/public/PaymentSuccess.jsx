@@ -60,7 +60,7 @@ const PaymentSuccess = () => {
         </div>
 
         <p className="text-xs text-text-secondary mt-6">
-          Need help? Contact us at support@ventixe.com
+          Need help? Contact us at support@CEMS.com
         </p>
       </Card>
     </div>

@@ -1,12 +1,7 @@
-import { useState, useEffect } from 'react';
-import {
-  Calendar,
-  Users,
-  Building2,
-  Plus,
-} from 'lucide-react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { useState, useEffect } from "react";
+import { Calendar, Users, Building2, Plus } from "lucide-react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../../services/firebase";
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -15,154 +10,304 @@ const Dashboard = () => {
     todayRegistrations: 0,
     todayAddedEvents: 0,
   });
+
+  const [todayEvents, setTodayEvents] = useState([]);
+  const [todayUsers, setTodayUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
+    loadDashboard();
   }, []);
 
-  const fetchDashboardData = async () => {
+  /* ---------------- DATE HELPERS ---------------- */
+
+  const toDate = (value) => {
+    if (!value) return null;
+    return value.toDate ? value.toDate() : new Date(value);
+  };
+
+  const isToday = (value) => {
+    const date = toDate(value);
+    if (!date) return false;
+
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
+
+  const formatDate = (value) => {
+    const date = toDate(value);
+    if (!date) return "-";
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  /* ---------------- MAIN FETCH ---------------- */
+
+  const loadDashboard = async () => {
     try {
-      // Fetch all events
-      const eventsRef = collection(db, 'events');
-      const eventsSnapshot = await getDocs(eventsRef);
-      const events = eventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setLoading(true);
 
-      // Fetch all departments
-      const deptRef = collection(db, 'departments');
-      const deptSnapshot = await getDocs(deptRef);
+      const [eventsSnap, deptSnap, regSnap] = await Promise.all([
+        getDocs(collection(db, "events")),
+        getDocs(collection(db, "departments")),
+        getDocs(collection(db, "registrations")),
+      ]);
 
-      // Fetch all registrations
-      const regsRef = collection(db, 'registrations');
-      const regsSnapshot = await getDocs(regsRef);
-      const registrations = regsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      // Calculate today's date at midnight
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      // Count today's registrations
-      const todayRegs = registrations.filter(reg => {
-        if (!reg.createdAt) return false;
-        const regDate = reg.createdAt.toDate ? reg.createdAt.toDate() : new Date(reg.createdAt);
-        return regDate >= today;
+      /* -------- DEPARTMENTS MAP -------- */
+      const departmentMap = {};
+      deptSnap.docs.forEach(doc => {
+        departmentMap[doc.id] = doc.data().name; // department name field
       });
 
-      // Count today's added events
-      const todayEvents = events.filter(event => {
-        if (!event.createdAt) return false;
-        const eventCreated = event.createdAt.toDate ? event.createdAt.toDate() : new Date(event.createdAt);
-        return eventCreated >= today;
+      /* -------- EVENTS -------- */
+      const events = eventsSnap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const todayCreatedEvents = events.filter(e =>
+        isToday(e.createdAt)
+      );
+
+      setTodayEvents(todayCreatedEvents);
+
+      /* -------- REGISTRATIONS -------- */
+      let todayStudentCount = 0;
+      let todayStudents = [];
+
+      regSnap.docs.forEach(doc => {
+        const data = doc.data();
+
+        if (isToday(data.createdAt) && Array.isArray(data.students)) {
+          todayStudentCount += data.students.length;
+
+          data.students.forEach(student => {
+            todayStudents.push({
+              id: `${doc.id}-${student.registerNumber}`,
+              name: student.name,
+              registerNumber: student.registerNumber,
+              departmentName:
+                departmentMap[student.departmentId] ||
+                student.departmentName ||
+                "-",
+              title: data.eventTitle || "-",
+            });
+          });
+        }
       });
 
+      setTodayUsers(todayStudents);
+
+      /* -------- STATS -------- */
       setStats({
-        totalEvents: events.length,
-        totalDepartments: deptSnapshot.docs.length,
-        todayRegistrations: todayRegs.length,
-        todayAddedEvents: todayEvents.length,
+        totalEvents: eventsSnap.size,
+        totalDepartments: deptSnap.size,
+        todayRegistrations: todayStudentCount,
+        todayAddedEvents: todayCreatedEvents.length,
       });
 
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      console.error("Dashboard Error:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const cardStyle = {
-    backgroundColor: '#FFFFFF',
-    borderRadius: '1rem',
-    padding: '1.5rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
+  /* ---------------- UI STYLES ---------------- */
+
+  const card = {
+    background: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    boxShadow: "0 1px 3px rgba(0,0,0,.1)",
+    display: "flex",
+    gap: 16,
+    alignItems: "center",
   };
 
-  const iconContainerStyle = (bgColor) => ({
-    width: '3.5rem',
-    height: '3.5rem',
-    borderRadius: '1rem',
-    backgroundColor: bgColor,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
+  const iconBox = (bg) => ({
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    background: bg,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   });
+
+  const tableUI = {
+    card: {
+      background: "#fff",
+      borderRadius: 16,
+      padding: 24,
+      boxShadow: "0 1px 3px rgba(0,0,0,.1)",
+      marginTop: 32,
+    },
+    header: {
+      display: "flex",
+      gap: 10,
+      fontSize: 20,
+      fontWeight: 600,
+      marginBottom: 20,
+      alignItems: "center",
+    },
+    table: {
+      width: "100%",
+      borderCollapse: "separate",
+      borderSpacing: "0 12px",
+    },
+    th: {
+      textAlign: "left",
+      fontSize: 13,
+      color: "#64748B",
+    },
+    row: {
+      background: "#F8FAFC",
+    },
+    td: {
+      padding: 16,
+      fontSize: 14,
+    },
+    empty: {
+      padding: 20,
+      textAlign: "center",
+      color: "#64748B",
+    },
+  };
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
-        <div style={{
-          width: '3rem',
-          height: '3rem',
-          border: '3px solid #E2E8F0',
-          borderTopColor: '#E91E63',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-        }} />
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ minHeight: 300, display: "flex", justifyContent: "center", alignItems: "center" }}>
+        Loading...
       </div>
     );
   }
 
   return (
     <div>
-      {/* Header */}
-      <div style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#1E293B', margin: '0 0 0.5rem 0' }}>
-          Dashboard
-        </h1>
-        <p style={{ fontSize: '0.9375rem', color: '#64748B', margin: 0 }}>
-          Welcome back! Here's an overview of your event management system.
-        </p>
+      <h1 style={{ fontSize: 28, fontWeight: 700 }}>Dashboard</h1>
+      <p style={{ color: "#64748B", marginBottom: 24 }}>
+        Welcome back! Here's today's overview.
+      </p>
+
+      {/* STATS */}
+      <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))" }}>
+        <div style={card}>
+          <div style={iconBox("rgba(139,92,246,.1)")}>
+            <Calendar color="#8B5CF6" />
+          </div>
+          <div>
+            <div>Total Events</div>
+            <strong>{stats.totalEvents}</strong>
+          </div>
+        </div>
+
+        <div style={card}>
+          <div style={iconBox("rgba(233,30,99,.1)")}>
+            <Building2 color="#E91E63" />
+          </div>
+          <div>
+            <div>Total Departments</div>
+            <strong>{stats.totalDepartments}</strong>
+          </div>
+        </div>
+
+        <div style={card}>
+          <div style={iconBox("rgba(16,185,129,.1)")}>
+            <Users color="#10B981" />
+          </div>
+          <div>
+            <div>Today's Registrations</div>
+            <strong>{stats.todayRegistrations}</strong>
+          </div>
+        </div>
+
+        <div style={card}>
+          <div style={iconBox("rgba(245,158,11,.1)")}>
+            <Plus color="#F59E0B" />
+          </div>
+          <div>
+            <div>Today's Added Events</div>
+            <strong>{stats.todayAddedEvents}</strong>
+          </div>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: '1.5rem' }}>
-        {/* Total Events Card */}
-        <div style={cardStyle}>
-          <div style={iconContainerStyle('rgba(139, 92, 246, 0.1)')}>
-            <Calendar style={{ width: '1.5rem', height: '1.5rem', color: '#8B5CF6' }} />
-          </div>
-          <div>
-            <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '0.25rem' }}>Total Events</p>
-            <p style={{ fontSize: '2rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>{stats.totalEvents}</p>
-          </div>
+      {/* TODAY EVENTS */}
+      <div style={tableUI.card}>
+        <div style={tableUI.header}>
+          <Calendar /> Today Created Events
         </div>
+        <table style={tableUI.table}>
+          <thead>
+            <tr>
+              <th style={tableUI.th}>S No</th>
+              <th style={tableUI.th}>Event</th>
+              <th style={tableUI.th}>Date</th>
+              <th style={tableUI.th}>Category</th>
+              <th style={tableUI.th}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {todayEvents.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={tableUI.empty}>No events today</td>
+              </tr>
+            ) : (
+              todayEvents.map((e, i) => (
+                <tr key={e.id} style={tableUI.row}>
+                  <td style={tableUI.td}>{i + 1}</td>
+                  <td style={tableUI.td}>{e.title}</td>
+                  <td style={tableUI.td}>{formatDate(e.eventDate || e.createdAt)}</td>
+                  <td style={tableUI.td}>{e.category}</td>
+                  <td style={tableUI.td}>{e.status || "Active"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Total Departments Card */}
-        <div style={cardStyle}>
-          <div style={iconContainerStyle('rgba(233, 30, 99, 0.1)')}>
-            <Building2 style={{ width: '1.5rem', height: '1.5rem', color: '#E91E63' }} />
-          </div>
-          <div>
-            <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '0.25rem' }}>Total Departments</p>
-            <p style={{ fontSize: '2rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>{stats.totalDepartments}</p>
-          </div>
+      {/* TODAY STUDENTS */}
+      <div style={tableUI.card}>
+        <div style={tableUI.header}>
+          <Users /> Today Registered Students
         </div>
-
-        {/* Today's Registrations Card */}
-        <div style={cardStyle}>
-          <div style={iconContainerStyle('rgba(16, 185, 129, 0.1)')}>
-            <Users style={{ width: '1.5rem', height: '1.5rem', color: '#10B981' }} />
-          </div>
-          <div>
-            <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '0.25rem' }}>Today's Registrations</p>
-            <p style={{ fontSize: '2rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>{stats.todayRegistrations}</p>
-          </div>
-        </div>
-
-        {/* Today's Added Events Card */}
-        <div style={cardStyle}>
-          <div style={iconContainerStyle('rgba(245, 158, 11, 0.1)')}>
-            <Plus style={{ width: '1.5rem', height: '1.5rem', color: '#F59E0B' }} />
-          </div>
-          <div>
-            <p style={{ fontSize: '0.875rem', color: '#64748B', marginBottom: '0.25rem' }}>Today's Added Events</p>
-            <p style={{ fontSize: '2rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>{stats.todayAddedEvents}</p>
-          </div>
-        </div>
+        <table style={tableUI.table}>
+          <thead>
+            <tr>
+              <th style={tableUI.th}>S No</th>
+              <th style={tableUI.th}>Name</th>
+              <th style={tableUI.th}>Department</th>
+              <th style={tableUI.th}>Event</th>
+              <th style={tableUI.th}>Register No</th>
+            </tr>
+          </thead>
+          <tbody>
+            {todayUsers.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={tableUI.empty}>No registrations today</td>
+              </tr>
+            ) : (
+              todayUsers.map((u, i) => (
+                <tr key={u.id} style={tableUI.row}>
+                  <td style={tableUI.td}>{i + 1}</td>
+                  <td style={tableUI.td}>{u.name}</td>
+                  <td style={tableUI.td}>{u.departmentName}</td>
+                  <td style={tableUI.td}>{u.title}</td>
+                  <td style={tableUI.td}>{u.registerNumber}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   );

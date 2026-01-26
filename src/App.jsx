@@ -36,9 +36,11 @@ import Departments from './pages/admin/Departments';
 import Registrations from './pages/admin/Registrations';
 import Winners from './pages/admin/Winners';
 
+
 // Judge Pages
 import JudgeLogin from './pages/judge/JudgeLogin';
 import JudgeDashboard from './pages/judge/JudgeDashboard';
+import Judges from './pages/admin/Judges';
 
 // Department Pages
 import {
@@ -98,6 +100,7 @@ function App() {
           >
             <Route index element={<Dashboard />} />
             <Route path="events" element={<ManageEvents />} />
+            <Route path="judges" element={<Judges/>} />
             <Route path="events/create" element={<CreateEvent />} />
             <Route path="events/:eventId/edit" element={<EditEvent />} />
             <Route path="participants" element={<Participants />} />

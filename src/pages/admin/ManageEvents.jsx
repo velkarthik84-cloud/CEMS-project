@@ -250,6 +250,32 @@ const ManageEvents = () => {
     color: '#64748B',
   };
 
+  const actionPrimaryBtn = {
+  padding: '0.45rem 0.9rem',
+  borderRadius: '0.5rem',
+  border: 'none',
+  fontSize: '0.75rem',
+  fontWeight: 600,
+  cursor: 'pointer',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.35rem',
+  transition: 'all 0.2s ease',
+};
+
+const publishBtnStyle = {
+  ...actionPrimaryBtn,
+  backgroundColor: '#DCFCE7',
+  color: '#166534',
+};
+
+const closeBtnStyle = {
+  ...actionPrimaryBtn,
+  backgroundColor: '#FFEDD5',
+  color: '#9A3412',
+};
+
+
   const statusOptions = [
     { value: '', label: 'All Status' },
     { value: 'draft', label: 'Draft' },
@@ -317,6 +343,7 @@ const ManageEvents = () => {
                 <th style={thStyle}>Category</th>
                 <th style={thStyle}>Registrations</th>
                 <th style={thStyle}>Status</th>
+                <th style={thStyle}>Event Publish</th>
                 <th style={{ ...thStyle, textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
@@ -367,6 +394,31 @@ const ManageEvents = () => {
                     <td style={tdStyle}>
                       <StatusBadge status={event.status || 'draft'} />
                     </td>
+
+                    <td style={{ padding: '1rem 1.5rem' }}>
+  {event.status === 'draft' && (
+    <button
+      style={publishBtnStyle}
+      onClick={() => handleStatusChange(event.id, 'published')}
+      onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+      onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+    >
+      Publish
+    </button>
+  )}
+
+  {event.status === 'published' && (
+    <button
+      style={closeBtnStyle}
+      onClick={() => handleStatusChange(event.id, 'closed')}
+      onMouseEnter={(e) => e.currentTarget.style.opacity = '0.85'}
+      onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+    >
+      Close
+    </button>
+  )}
+</td>
+
                     <td style={{ ...tdStyle, textAlign: 'right' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.25rem', position: 'relative' }}>
                         <button
@@ -386,6 +438,53 @@ const ManageEvents = () => {
                             <Edit style={{ width: '1rem', height: '1rem', color: '#64748B' }} />
                           </button>
                         </Link>
+
+                        {activeMenu === event.id && (
+                          <>
+                            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setActiveMenu(null)} />
+                            <div style={dropdownStyle}>
+                              {event.status === 'draft' && (
+                                <button style={dropdownItemStyle} onClick={() => handleStatusChange(event.id, 'published')}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  Publish Event
+                                </button>
+                              )}
+                              {event.status === 'published' && (
+                                <button style={dropdownItemStyle} onClick={() => handleStatusChange(event.id, 'closed')}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  Close Registration
+                                </button>
+                              )}
+                              <button
+                                style={dropdownItemStyle}
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`${window.location.origin}/events/${event.id}`);
+                                  toast.success('Link copied!');
+                                  setActiveMenu(null);
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              >
+                                <Copy style={{ width: '1rem', height: '1rem' }} />
+                                Copy Link
+                              </button>
+                              <hr style={{ margin: '0.25rem 0', border: 'none', borderTop: '1px solid #E2E8F0' }} />
+                              <button
+                                style={{ ...dropdownItemStyle, color: '#EF4444' }}
+                                onClick={() => { setDeleteModal({ open: true, event }); setActiveMenu(null); }}
+                                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#F8FAFC'}
+                                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                              >
+                                <Trash2 style={{ width: '1rem', height: '1rem' }} />
+                                Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
                         <div style={{ position: 'relative' }}>
                           <button
                             style={actionBtnStyle}

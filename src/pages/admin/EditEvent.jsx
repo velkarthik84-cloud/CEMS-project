@@ -14,7 +14,8 @@ import {
   Eye,
   Globe,
   Plus,
-  Trash2
+  Trash2,
+  CreditCard
 } from 'lucide-react';
 import {
   Button,

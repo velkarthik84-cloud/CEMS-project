@@ -722,7 +722,7 @@ const Login = () => {
               <div className="login-logo-icon">
                 <Calendar />
               </div>
-              <span className="login-logo-text">Ventixe</span>
+              <span className="login-logo-text">CEMS</span>
             </div>
 
             {/* Login Type Tabs */}

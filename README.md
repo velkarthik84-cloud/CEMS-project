@@ -1,6 +1,6 @@
-# React + Vite
+# CEMS - Classroom Event Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive event management system for organizing, managing, and tracking classroom events with role-based access control.
 
 Currently, two official plugins are available:
 

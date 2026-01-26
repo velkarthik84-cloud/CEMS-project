@@ -123,7 +123,7 @@ const Attendance = () => {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: selectedEventData.fee * 100,
       currency: 'INR',
-      name: 'Ventixe Events',
+      name: 'CEMS Events',
       description: `Payment for ${selectedEventData.label}`,
       handler: async (response) => {
         try {
@@ -230,7 +230,7 @@ const Attendance = () => {
   const onScanSuccess = async (decodedText) => {
     try {
       const parts = decodedText.split(':');
-      if (parts[0] !== 'VENTIXE') {
+      if (parts[0] !== 'CEMS') {
         toast.error('Invalid QR code');
         return;
       }

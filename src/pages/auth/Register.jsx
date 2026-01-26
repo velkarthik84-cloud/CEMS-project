@@ -274,12 +274,12 @@ const Register = () => {
             <div style={logoIconStyle}>
               <Calendar style={{ width: '1.5rem', height: '1.5rem', color: '#FFFFFF' }} />
             </div>
-            <span style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#1E3A5F' }}>Ventixe</span>
+            <span style={{ fontWeight: 'bold', fontSize: '1.5rem', color: '#1E3A5F' }}>CEMS</span>
           </div>
 
           {/* Welcome Text */}
           <h1 style={titleStyle}>Create an account</h1>
-          <p style={subtitleStyle}>Fill in your details to get started with Ventixe.</p>
+          <p style={subtitleStyle}>Fill in your details to get started with CEMS.</p>
 
           {/* Register Form */}
           <form onSubmit={handleSubmit(onSubmit)} style={formStyle}>

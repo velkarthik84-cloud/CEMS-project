@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import imageCompression from 'browser-image-compression';
 import {
   Calendar,
   Clock,
@@ -125,9 +126,9 @@ const EventRegister = () => {
 
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: event.fee * 100,
+      
       currency: 'INR',
-      name: 'Ventixe Events',
+      name: 'CEMS Events',
       description: `Registration for ${event.title}`,
       handler: async (response) => {
         try {
@@ -173,72 +174,103 @@ const EventRegister = () => {
     paymentObject.open();
   };
 
-  const onSubmit = async (data) => {
-    if (!agreedToTerms) {
-      toast.error('Please agree to the terms and conditions');
-      return;
+ const onSubmit = async (data) => {
+  if (!agreedToTerms) {
+    toast.error('Please agree to the terms and conditions');
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    const registrationId = generateRegistrationId();
+    const eventFee = Number(event?.fee ?? 0); // 🔒 safety
+
+    const regData = {
+      registrationId,
+      eventId: event.id,
+      eventTitle: event.title,
+      userId: user.uid,
+      ...data,
+
+      // ✅ Firestore DB upload
+      idProof: idProof || null,
+
+      paymentStatus: eventFee > 0 ? 'pending' : 'completed',
+      paymentId: null,
+      amount: eventFee,
+
+      attendanceStatus: 'not_checked_in',
+      checkedInAt: null,
+
+      qrCode: `CEMS_REG:${registrationId}`,
+      createdAt: serverTimestamp(),
+    };
+
+    const docRef = await addDoc(collection(db, 'registrations'), regData);
+    setRegistrationData({ ...regData, id: docRef.id });
+
+    // Increment only once
+    await updateDoc(doc(db, 'events', event.id), {
+      currentCount: increment(1),
+    });
+
+    toast.success('Registration successful!');
+    setStep(3);
+  } catch (error) {
+    console.error('Registration error:', error);
+    toast.error('Registration failed. Please try again.');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
+
+  const handleFileChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('File size must be less than 5MB');
+    return;
+  }
+
+  try {
+    let processedFile = file;
+
+    // Compress only images
+    if (file.type.startsWith('image/')) {
+      processedFile = await compressImage(file);
     }
 
-    setSubmitting(true);
-    try {
-      const registrationId = generateRegistrationId();
+    const base64 = await fileToBase64(processedFile);
 
-      let idProofUrl = null;
-      if (idProof) {
-        idProofUrl = await uploadFile(
-          idProof,
-          `registrations/${registrationId}/id-proof-${Date.now()}`
-        );
-      }
+    setIdProof({
+      fileName: file.name,
+      fileType: file.type,
+      base64, // 🔥 Firestore-safe
+    });
+  } catch (err) {
+    console.error(err);
+    toast.error('Failed to process file');
+  }
+};
 
-      const regData = {
-        registrationId,
-        eventId: event.id,
-        eventTitle: event.title,
-        userId: user.uid,
-        ...data,
-        idProofUrl,
-        paymentStatus: event.fee > 0 ? 'pending' : 'completed',
-        paymentId: null,
-        amount: event.fee,
-        attendanceStatus: 'not_checked_in',
-        checkedInAt: null,
-        qrCode: registrationId,
-        createdAt: serverTimestamp(),
-      };
+  const fileToBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 
-      const docRef = await addDoc(collection(db, 'registrations'), regData);
-      regData.id = docRef.id;
-      setRegistrationData(regData);
-
-      if (event.fee > 0 && event.mandatoryPayment) {
-        setStep(2);
-        await processPayment(regData);
-      } else {
-        await updateDoc(doc(db, 'events', event.id), {
-          currentCount: increment(1),
-        });
-        toast.success('Registration successful!');
-        setStep(3);
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
-        return;
-      }
-      setIdProof(file);
-    }
-  };
+const compressImage = async (file) => {
+  return await imageCompression(file, {
+    maxSizeMB: 0.3,          // ~300KB
+    maxWidthOrHeight: 1200,
+    useWebWorker: true,
+  });
+};
 
   // Loading state
   if (loading) {
@@ -322,7 +354,7 @@ const EventRegister = () => {
             marginBottom: '1rem',
           }}>
             <QRCodeSVG
-              value={`VENTIXE:${eventId}:${user?.uid || 'guest'}`}
+              value={`CEMS:${eventId}:${user?.uid || 'guest'}`}
               size={160}
               level="H"
               includeMargin
@@ -785,3 +817,5 @@ const EventRegister = () => {
 };
 
 export default EventRegister;
+
+

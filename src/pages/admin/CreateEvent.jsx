@@ -40,6 +40,7 @@ const eventSchema = z.object({
   endTime: z.string().min(1, 'End time is required'),
   registrationStart: z.string().min(1, 'Registration start date is required'),
   registrationEnd: z.string().min(1, 'Registration end date is required'),
+  rules: z.string().optional(),
 });
 
 const CreateEvent = () => {
@@ -302,6 +303,7 @@ const CreateEvent = () => {
         registrationStart: new Date(data.registrationStart),
         registrationEnd: new Date(data.registrationEnd),
         currentCount: 0,
+        rules: data.rules || '',
         judges: validJudges.map(j => ({
           id: j.id.toString(),
           name: j.name,
@@ -559,8 +561,23 @@ const CreateEvent = () => {
               />
               {errors.venue && <p style={errorStyle}>{errors.venue.message}</p>}
             </div>
+
+
           )}
+
+          <div>
+            <label style={labelStyle}>Event Rules</label>
+            <textarea
+              placeholder="Enter event rules, guidelines, or instructions..."
+              style={{ ...textareaStyle, minHeight: '100px' }}
+              {...register('rules')}
+            />
+            {errors.rules && <p style={errorStyle}>{errors.rules.message}</p>}
+          </div>
         </div>
+
+
+
 
         {/* Category-Specific Fields */}
         {watchCategory === 'workshop' && (

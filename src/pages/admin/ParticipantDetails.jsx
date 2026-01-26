@@ -128,7 +128,7 @@ const ParticipantDetails = () => {
           await addDoc(collection(db, 'payments'), {
             registrationId: participantId,
             eventId: registration.eventId,
-            amount: registration.amount,
+            // amount: registration.amount,
             currency: 'INR',
             status: 'completed',
             razorpayPaymentId: response.razorpay_payment_id,
