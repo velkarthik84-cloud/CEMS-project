@@ -220,7 +220,7 @@ const JudgeListCard = ({ judge, refresh }) => {
 
       <div style={{ flex: 1 }}>
         <div style={cardHeader}>
-          {/* <h3 style={cardTitle}>{judge.name}</h3> */}
+          
           <span
             style={{
               ...statusBadge,
