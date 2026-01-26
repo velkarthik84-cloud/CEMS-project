@@ -77,80 +77,93 @@ const Certificates = () => {
     return Math.round(total / scoreValues.length);
   };
 
-  const fetchParticipants = async (showRefreshing = false) => {
-    try {
-      if (showRefreshing) setRefreshing(true);
+ const fetchParticipants = async (showRefreshing = false) => {
+  try {
+    if (showRefreshing) setRefreshing(true);
 
-      const eventData = events.find(e => e.value === selectedEvent);
-      setSelectedEventData(eventData);
+    const eventData = events.find(e => e.value === selectedEvent);
+    setSelectedEventData(eventData);
 
-      const regsRef = collection(db, 'registrations');
-      const q = query(regsRef, where('eventId', '==', selectedEvent));
-      const snapshot = await getDocs(q);
+    const regsRef = collection(db, 'registrations');
+    const q = query(regsRef, where('eventId', '==', selectedEvent));
+    const snapshot = await getDocs(q);
 
-      const participantsList = snapshot.docs.map(doc => {
-        const data = doc.data();
-        // Calculate average score from all judges
-        const avgScore = calculateAverageScore(data.scores);
-        const judgeCount = data.scores ? Object.keys(data.scores).length : 0;
+    const participantsList = snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
 
-        console.log('Participant:', data.fullName, 'Scores:', data.scores, 'Avg:', avgScore);
+      const student =
+        Array.isArray(data.students) && data.students.length > 0
+          ? data.students[0]
+          : {};
 
-        return {
-          id: doc.id,
-          ...data,
-          score: avgScore,
-          judgeScores: data.scores || {},
-          judgeCount: judgeCount,
-          certificateGenerated: data.certificateGenerated || false,
-        };
-      });
+      const avgScore = calculateAverageScore(data.scores);
+      const judgeCount = data.scores ? Object.keys(data.scores).length : 0;
 
-      // Sort by score descending
-      participantsList.sort((a, b) => b.score - a.score);
-      setParticipants(participantsList);
+      return {
+        id: docSnap.id,
 
-      if (showRefreshing) {
-        toast.success('Data refreshed!');
-      }
-    } catch (error) {
-      console.error('Error fetching participants:', error);
-      toast.error('Failed to fetch participants');
-    } finally {
-      setRefreshing(false);
+        // normalized student fields
+        fullName: student.name || 'N/A',
+        email: student.email || 'N/A',
+        phone: student.phone || '',
+        registerNumber: student.registerNumber || '',
+        year: student.year || '',
+
+        // score info
+        score: avgScore,
+        judgeScores: data.scores || {},
+        judgeCount,
+
+        certificateGenerated: data.certificateGenerated || false,
+      };
+    });
+
+    // ✅ sort by score (highest first)
+    participantsList.sort((a, b) => b.score - a.score);
+
+    setParticipants(participantsList);
+
+    if (showRefreshing) {
+      toast.success('Scores refreshed');
     }
-  };
+  } catch (error) {
+    console.error('Error fetching participants:', error);
+    toast.error('Failed to fetch participants');
+  } finally {
+    setRefreshing(false);
+  }
+};
 
-  const handleRefresh = () => {
-    fetchParticipants(true);
-  };
+const handleRefresh = () => {
+  fetchParticipants(true);
+};
 
-  const getCertificateType = (score, rank, totalParticipants, judgeCount = 0) => {
-    if (judgeCount === 0) return { type: 'Not Scored', color: '#94A3B8', icon: FileText };
-    if (rank === 1 && score > 0) return { type: 'Gold', color: '#FFD700', icon: Trophy };
-    if (rank === 2 && score > 0) return { type: 'Silver', color: '#C0C0C0', icon: Medal };
-    if (rank === 3 && score > 0) return { type: 'Bronze', color: '#CD7F32', icon: Medal };
-    if (score >= 80) return { type: 'Excellence', color: '#8B5CF6', icon: Star };
-    if (score >= 60) return { type: 'Merit', color: '#3B82F6', icon: Award };
-    return { type: 'Participation', color: '#10B981', icon: CheckCircle };
-  };
+      const getCertificateType = (score, rank, totalParticipants, judgeCount = 0) => {
+        if (judgeCount === 0) return { type: 'Not Scored', color: '#94A3B8', icon: FileText };
+        if (rank === 1 && score > 0) return { type: 'Gold', color: '#FFD700', icon: Trophy };
+        if (rank === 2 && score > 0) return { type: 'Silver', color: '#C0C0C0', icon: Medal };
+        if (rank === 3 && score > 0) return { type: 'Bronze', color: '#CD7F32', icon: Medal };
+        if (score >= 80) return { type: 'Excellence', color: '#8B5CF6', icon: Star };
+        if (score >= 60) return { type: 'Merit', color: '#3B82F6', icon: Award };
+        return { type: 'Participation', color: '#10B981', icon: CheckCircle };
+      };
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return format(new Date(), 'MMMM dd, yyyy');
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'MMMM dd, yyyy');
-  };
+      const formatDate = (timestamp) => {
+        if (!timestamp) return format(new Date(), 'MMMM dd, yyyy');
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return format(date, 'MMMM dd, yyyy');
+      };
 
-  const generateCertificate = async (participant, rank) => {
-    setGenerating(participant.id);
+      const generateCertificate = async (participant, rank) => {
+        setGenerating(participant.id);
 
-    const certType = getCertificateType(participant.score, rank, participants.length, participant.judgeCount);
+        const certType = getCertificateType(participant.score, rank, participants.length, participant.judgeCount);
 
-    // Generate unique certificate number
-    const certNumber = `CERT-${Date.now().toString(36).toUpperCase()}-${participant.id.slice(0,4).toUpperCase()}`;
+        // Generate unique certificate number
+        const certNumber = `CERT-${Date.now().toString(36).toUpperCase()}-${participant.id.slice(0, 4).toUpperCase()}`;
 
-    // Create certificate HTML with elegant blue and gold design
-    const certificateHTML = `
+        // Create certificate HTML with elegant blue and gold design
+        const certificateHTML = `
       <!DOCTYPE html>
       <html>
       <head>
@@ -487,475 +500,475 @@ const Certificates = () => {
       </html>
     `;
 
-    // Open in new window for printing/saving
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(certificateHTML);
-    printWindow.document.close();
+        // Open in new window for printing/saving
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(certificateHTML);
+        printWindow.document.close();
 
-    // Update participant record
-    try {
-      await updateDoc(doc(db, 'registrations', participant.id), {
-        certificateGenerated: true,
-        certificateType: certType.type,
-        certificateGeneratedAt: serverTimestamp(),
-      });
+        // Update participant record
+        try {
+          await updateDoc(doc(db, 'registrations', participant.id), {
+            certificateGenerated: true,
+            certificateType: certType.type,
+            certificateGeneratedAt: serverTimestamp(),
+          });
 
-      setParticipants(participants.map(p =>
-        p.id === participant.id ? { ...p, certificateGenerated: true } : p
-      ));
+          setParticipants(participants.map(p =>
+            p.id === participant.id ? { ...p, certificateGenerated: true } : p
+          ));
 
-      toast.success(`Certificate generated for ${participant.fullName}`);
-    } catch (error) {
-      console.error('Error updating certificate status:', error);
-    }
+          toast.success(`Certificate generated for ${participant.fullName}`);
+        } catch (error) {
+          console.error('Error updating certificate status:', error);
+        }
 
-    setGenerating(null);
-  };
+        setGenerating(null);
+      };
 
-  const generateAllCertificates = async () => {
-    const scoredParticipants = participants.filter(p => p.judgeCount > 0);
-    if (scoredParticipants.length === 0) {
-      toast.error('No participants have been scored yet');
-      return;
-    }
-    for (let i = 0; i < scoredParticipants.length; i++) {
-      const participant = scoredParticipants[i];
-      const rank = participants.findIndex(p => p.id === participant.id) + 1;
-      await generateCertificate(participant, rank);
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-    toast.success(`${scoredParticipants.length} certificates generated!`);
-  };
+      const generateAllCertificates = async () => {
+        const scoredParticipants = participants.filter(p => p.judgeCount > 0);
+        if (scoredParticipants.length === 0) {
+          toast.error('No participants have been scored yet');
+          return;
+        }
+        for (let i = 0; i < scoredParticipants.length; i++) {
+          const participant = scoredParticipants[i];
+          const rank = participants.findIndex(p => p.id === participant.id) + 1;
+          await generateCertificate(participant, rank);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        toast.success(`${scoredParticipants.length} certificates generated!`);
+      };
 
-  const filteredParticipants = participants.filter(p =>
-    p.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      const filteredParticipants = participants.filter(p =>
+        p.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
 
-  // Styles
-  const cardStyle = {
-    backgroundColor: '#FFFFFF',
-    borderRadius: '1rem',
-    padding: '1.5rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-  };
+      // Styles
+      const cardStyle = {
+        backgroundColor: '#FFFFFF',
+        borderRadius: '1rem',
+        padding: '1.5rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+      };
 
-  const statCardStyle = {
-    ...cardStyle,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-  };
+      const statCardStyle = {
+        ...cardStyle,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+      };
 
-  const inputStyle = {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    paddingLeft: '2.5rem',
-    backgroundColor: '#F8FAFC',
-    border: '1px solid #E2E8F0',
-    borderRadius: '0.5rem',
-    fontSize: '0.875rem',
-    color: '#1E293B',
-    outline: 'none',
-  };
+      const inputStyle = {
+        width: '100%',
+        padding: '0.75rem 1rem',
+        paddingLeft: '2.5rem',
+        backgroundColor: '#F8FAFC',
+        border: '1px solid #E2E8F0',
+        borderRadius: '0.5rem',
+        fontSize: '0.875rem',
+        color: '#1E293B',
+        outline: 'none',
+      };
 
-  const selectStyle = {
-    padding: '0.75rem 2.5rem 0.75rem 1rem',
-    backgroundColor: '#F8FAFC',
-    border: '1px solid #E2E8F0',
-    borderRadius: '0.5rem',
-    fontSize: '0.875rem',
-    color: '#1E293B',
-    outline: 'none',
-    appearance: 'none',
-    cursor: 'pointer',
-    minWidth: '200px',
-  };
+      const selectStyle = {
+        padding: '0.75rem 2.5rem 0.75rem 1rem',
+        backgroundColor: '#F8FAFC',
+        border: '1px solid #E2E8F0',
+        borderRadius: '0.5rem',
+        fontSize: '0.875rem',
+        color: '#1E293B',
+        outline: 'none',
+        appearance: 'none',
+        cursor: 'pointer',
+        minWidth: '200px',
+      };
 
-  const buttonStyle = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '0.75rem 1.25rem',
-    backgroundColor: '#E91E63',
-    color: '#FFFFFF',
-    border: 'none',
-    borderRadius: '0.5rem',
-    fontSize: '0.875rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-  };
+      const buttonStyle = {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.5rem',
+        padding: '0.75rem 1.25rem',
+        backgroundColor: '#E91E63',
+        color: '#FFFFFF',
+        border: 'none',
+        borderRadius: '0.5rem',
+        fontSize: '0.875rem',
+        fontWeight: '600',
+        cursor: 'pointer',
+      };
 
-  const outlineButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#FFFFFF',
-    color: '#1E293B',
-    border: '1px solid #E2E8F0',
-  };
+      const outlineButtonStyle = {
+        ...buttonStyle,
+        backgroundColor: '#FFFFFF',
+        color: '#1E293B',
+        border: '1px solid #E2E8F0',
+      };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
-            Certificates
-          </h1>
-          <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem' }}>
-            Generate score-based certificates for participants
-          </p>
-        </div>
-        <div style={{ position: 'relative' }}>
-          <select
-            value={selectedEvent}
-            onChange={(e) => setSelectedEvent(e.target.value)}
-            style={selectStyle}
-          >
-            <option value="">Select Event</option>
-            {events.map(event => (
-              <option key={event.value} value={event.value}>{event.label}</option>
-            ))}
-          </select>
-          <ChevronDown style={{
-            position: 'absolute',
-            right: '0.75rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: '1rem',
-            height: '1rem',
-            color: '#94A3B8',
-            pointerEvents: 'none',
-          }} />
-        </div>
-      </div>
-
-      {selectedEvent ? (
-        <>
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: '1.25rem' }}>
-            <div style={statCardStyle}>
-              <div style={{
-                width: '3rem',
-                height: '3rem',
-                borderRadius: '0.75rem',
-                backgroundColor: 'rgba(139, 92, 246, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Users style={{ width: '1.5rem', height: '1.5rem', color: '#8B5CF6' }} />
-              </div>
-              <div>
-                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
-                  {participants.length}
-                </p>
-                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Total Participants</p>
-              </div>
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+            <div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                Certificates
+              </h1>
+              <p style={{ fontSize: '0.875rem', color: '#64748B', marginTop: '0.25rem' }}>
+                Generate score-based certificates for participants
+              </p>
             </div>
-
-            <div style={statCardStyle}>
-              <div style={{
-                width: '3rem',
-                height: '3rem',
-                borderRadius: '0.75rem',
-                backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Trophy style={{ width: '1.5rem', height: '1.5rem', color: '#FFD700' }} />
-              </div>
-              <div>
-                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
-                  {participants.filter(p => p.judgeCount > 0).length}
-                </p>
-                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Scored by Judges</p>
-              </div>
-            </div>
-
-            <div style={statCardStyle}>
-              <div style={{
-                width: '3rem',
-                height: '3rem',
-                borderRadius: '0.75rem',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Award style={{ width: '1.5rem', height: '1.5rem', color: '#10B981' }} />
-              </div>
-              <div>
-                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
-                  {participants.filter(p => p.certificateGenerated).length}
-                </p>
-                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Certificates Issued</p>
-              </div>
-            </div>
-
-            <div style={statCardStyle}>
-              <div style={{
-                width: '3rem',
-                height: '3rem',
-                borderRadius: '0.75rem',
-                backgroundColor: 'rgba(233, 30, 99, 0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Star style={{ width: '1.5rem', height: '1.5rem', color: '#E91E63' }} />
-              </div>
-              <div>
-                <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
-                  {(() => {
-                    const scoredParticipants = participants.filter(p => p.judgeCount > 0);
-                    if (scoredParticipants.length === 0) return '-';
-                    return Math.round(scoredParticipants.reduce((a, b) => a + b.score, 0) / scoredParticipants.length);
-                  })()}
-                </p>
-                <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Avg. Score</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Filters & Actions */}
-          <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ position: 'relative', maxWidth: '24rem', minWidth: '200px' }}>
-              <Search style={{
+            <div style={{ position: 'relative' }}>
+              <select
+                value={selectedEvent}
+                onChange={(e) => setSelectedEvent(e.target.value)}
+                style={selectStyle}
+              >
+                <option value="">Select Event</option>
+                {events.map(event => (
+                  <option key={event.value} value={event.value}>{event.label}</option>
+                ))}
+              </select>
+              <ChevronDown style={{
                 position: 'absolute',
-                left: '0.75rem',
+                right: '0.75rem',
                 top: '50%',
                 transform: 'translateY(-50%)',
                 width: '1rem',
                 height: '1rem',
                 color: '#94A3B8',
+                pointerEvents: 'none',
               }} />
-              <input
-                type="text"
-                placeholder="Search participants..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button
-                onClick={handleRefresh}
-                disabled={refreshing}
-                style={{
-                  ...outlineButtonStyle,
-                  opacity: refreshing ? 0.7 : 1,
-                }}
-              >
-                <RefreshCw style={{
-                  width: '1rem',
-                  height: '1rem',
-                  animation: refreshing ? 'spin 1s linear infinite' : 'none',
-                }} />
-                {refreshing ? 'Refreshing...' : 'Refresh Scores'}
-              </button>
-              <button
-                onClick={generateAllCertificates}
-                disabled={participants.filter(p => p.judgeCount > 0).length === 0}
-                style={{ ...buttonStyle, opacity: participants.filter(p => p.judgeCount > 0).length === 0 ? 0.5 : 1 }}
-              >
-                <Printer style={{ width: '1rem', height: '1rem' }} />
-                Generate All ({participants.filter(p => p.judgeCount > 0).length} scored)
-              </button>
-            </div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-          </div>
-
-          {/* Participants Table */}
-          <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '1.25rem', borderBottom: '1px solid #F1F5F9' }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>
-                Participants & Scores
-              </h2>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ backgroundColor: '#F8FAFC' }}>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Rank</th>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Participant</th>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Score</th>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Certificate Type</th>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Status</th>
-                    <th style={{ padding: '0.875rem 1.25rem', textAlign: 'right', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredParticipants.length > 0 ? (
-                    filteredParticipants.map((participant, index) => {
-                      const rank = participants.findIndex(p => p.id === participant.id) + 1;
-                      const certType = getCertificateType(participant.score, rank, participants.length, participant.judgeCount);
-                      const CertIcon = certType.icon;
-
-                      return (
-                        <tr key={participant.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                          <td style={{ padding: '1rem 1.25rem' }}>
-                            <div style={{
-                              width: '2rem',
-                              height: '2rem',
-                              borderRadius: '50%',
-                              backgroundColor: rank <= 3 ? certType.color : '#F1F5F9',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontWeight: '700',
-                              fontSize: '0.875rem',
-                              color: rank <= 3 ? (rank === 2 ? '#1E293B' : '#FFFFFF') : '#64748B',
-                            }}>
-                              {rank}
-                            </div>
-                          </td>
-                          <td style={{ padding: '1rem 1.25rem' }}>
-                            <div>
-                              <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>{participant.fullName}</p>
-                              <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>{participant.email}</p>
-                            </div>
-                          </td>
-                          <td style={{ padding: '1rem 1.25rem' }}>
-                            {participant.judgeCount > 0 ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <div style={{
-                                  width: '100px',
-                                  height: '8px',
-                                  backgroundColor: '#F1F5F9',
-                                  borderRadius: '4px',
-                                  overflow: 'hidden',
-                                }}>
-                                  <div style={{
-                                    width: `${participant.score}%`,
-                                    height: '100%',
-                                    backgroundColor: certType.color,
-                                    borderRadius: '4px',
-                                  }} />
-                                </div>
-                                <span style={{ fontWeight: '600', color: '#1E293B' }}>{participant.score}</span>
-                                <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-                                  ({participant.judgeCount} judge{participant.judgeCount > 1 ? 's' : ''})
-                                </span>
-                              </div>
-                            ) : (
-                              <span style={{ color: '#94A3B8', fontSize: '0.875rem' }}>Not scored yet</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1rem 1.25rem' }}>
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.375rem',
-                              padding: '0.25rem 0.75rem',
-                              backgroundColor: `${certType.color}20`,
-                              color: certType.color,
-                              borderRadius: '1rem',
-                              fontSize: '0.8125rem',
-                              fontWeight: '500',
-                            }}>
-                              <CertIcon style={{ width: '0.875rem', height: '0.875rem' }} />
-                              {certType.type}
-                            </span>
-                          </td>
-                          <td style={{ padding: '1rem 1.25rem' }}>
-                            {participant.certificateGenerated ? (
-                              <span style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.375rem',
-                                color: '#10B981',
-                                fontSize: '0.8125rem',
-                              }}>
-                                <CheckCircle style={{ width: '1rem', height: '1rem' }} />
-                                Issued
-                              </span>
-                            ) : (
-                              <span style={{ color: '#94A3B8', fontSize: '0.8125rem' }}>Pending</span>
-                            )}
-                          </td>
-                          <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                            {participant.judgeCount > 0 ? (
-                              <button
-                                onClick={() => generateCertificate(participant, rank)}
-                                disabled={generating === participant.id}
-                                style={{
-                                  ...outlineButtonStyle,
-                                  padding: '0.5rem 1rem',
-                                  fontSize: '0.8125rem',
-                                  opacity: generating === participant.id ? 0.7 : 1,
-                                }}
-                              >
-                                <Download style={{ width: '0.875rem', height: '0.875rem' }} />
-                                {generating === participant.id ? 'Generating...' : 'Generate'}
-                              </button>
-                            ) : (
-                              <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Awaiting score</span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
-                        {participants.length === 0 ? 'No participants with scores found' : 'No matching participants'}
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
             </div>
           </div>
 
-          {/* Certificate Types Legend */}
-          <div style={cardStyle}>
-            <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>
-              Certificate Types
-            </h3>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-              {[
-                { type: 'Gold', color: '#FFD700', desc: 'Rank #1' },
-                { type: 'Silver', color: '#C0C0C0', desc: 'Rank #2' },
-                { type: 'Bronze', color: '#CD7F32', desc: 'Rank #3' },
-                { type: 'Excellence', color: '#8B5CF6', desc: 'Score 80+' },
-                { type: 'Merit', color: '#3B82F6', desc: 'Score 60-79' },
-                { type: 'Participation', color: '#10B981', desc: 'All participants' },
-              ].map(item => (
-                <div key={item.type} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#F8FAFC',
-                  borderRadius: '0.5rem',
-                }}>
+          {selectedEvent ? (
+            <>
+              {/* Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: '1.25rem' }}>
+                <div style={statCardStyle}>
                   <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Users style={{ width: '1.5rem', height: '1.5rem', color: '#8B5CF6' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                      {participants.length}
+                    </p>
+                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Total Participants</p>
+                  </div>
+                </div>
+
+                <div style={statCardStyle}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Trophy style={{ width: '1.5rem', height: '1.5rem', color: '#FFD700' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                      {participants.filter(p => p.judgeCount > 0).length}
+                    </p>
+                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Scored by Judges</p>
+                  </div>
+                </div>
+
+                <div style={statCardStyle}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Award style={{ width: '1.5rem', height: '1.5rem', color: '#10B981' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                      {participants.filter(p => p.certificateGenerated).length}
+                    </p>
+                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Certificates Issued</p>
+                  </div>
+                </div>
+
+                <div style={statCardStyle}>
+                  <div style={{
+                    width: '3rem',
+                    height: '3rem',
+                    borderRadius: '0.75rem',
+                    backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <Star style={{ width: '1.5rem', height: '1.5rem', color: '#E91E63' }} />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1E293B', margin: 0 }}>
+                      {(() => {
+                        const scoredParticipants = participants.filter(p => p.judgeCount > 0);
+                        if (scoredParticipants.length === 0) return '-';
+                        return Math.round(scoredParticipants.reduce((a, b) => a + b.score, 0) / scoredParticipants.length);
+                      })()}
+                    </p>
+                    <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>Avg. Score</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Filters & Actions */}
+              <div style={{ ...cardStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
+                <div style={{ position: 'relative', maxWidth: '24rem', minWidth: '200px' }}>
+                  <Search style={{
+                    position: 'absolute',
+                    left: '0.75rem',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
                     width: '1rem',
                     height: '1rem',
-                    borderRadius: '50%',
-                    backgroundColor: item.color,
+                    color: '#94A3B8',
                   }} />
-                  <span style={{ fontWeight: '500', color: '#1E293B' }}>{item.type}</span>
-                  <span style={{ fontSize: '0.75rem', color: '#64748B' }}>({item.desc})</span>
+                  <input
+                    type="text"
+                    placeholder="Search participants..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    style={inputStyle}
+                  />
                 </div>
-              ))}
-            </div>
-          </div>
-        </>
-      ) : (
-        <div style={{ ...cardStyle, textAlign: 'center', padding: '4rem' }}>
-          <Award style={{ width: '4rem', height: '4rem', color: '#CBD5E1', margin: '0 auto 1rem' }} />
-          <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1E293B', marginBottom: '0.5rem' }}>
-            Select an Event
-          </h3>
-          <p style={{ color: '#64748B', maxWidth: '400px', margin: '0 auto' }}>
-            Choose an event from the dropdown to view participants and generate score-based certificates
-          </p>
-        </div>
-      )}
-    </div>
-  );
-};
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <button
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                    style={{
+                      ...outlineButtonStyle,
+                      opacity: refreshing ? 0.7 : 1,
+                    }}
+                  >
+                    <RefreshCw style={{
+                      width: '1rem',
+                      height: '1rem',
+                      animation: refreshing ? 'spin 1s linear infinite' : 'none',
+                    }} />
+                    {refreshing ? 'Refreshing...' : 'Refresh Scores'}
+                  </button>
+                  <button
+                    onClick={generateAllCertificates}
+                    disabled={participants.filter(p => p.judgeCount > 0).length === 0}
+                    style={{ ...buttonStyle, opacity: participants.filter(p => p.judgeCount > 0).length === 0 ? 0.5 : 1 }}
+                  >
+                    <Printer style={{ width: '1rem', height: '1rem' }} />
+                    Generate All ({participants.filter(p => p.judgeCount > 0).length} scored)
+                  </button>
+                </div>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
 
-export default Certificates;
+              {/* Participants Table */}
+              <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+                <div style={{ padding: '1.25rem', borderBottom: '1px solid #F1F5F9' }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', margin: 0 }}>
+                    Participants & Scores
+                  </h2>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ backgroundColor: '#F8FAFC' }}>
+                        <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Rank</th>
+                        <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Participant</th>
+                        <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Score</th>
+                        <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Certificate Type</th>
+                        <th style={{ padding: '0.875rem 1.25rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Status</th>
+                        <th style={{ padding: '0.875rem 1.25rem', textAlign: 'right', fontSize: '0.75rem', fontWeight: '600', color: '#64748B', textTransform: 'uppercase' }}>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredParticipants.length > 0 ? (
+                        filteredParticipants.map((participant, index) => {
+                          const rank = participants.findIndex(p => p.id === participant.id) + 1;
+                          const certType = getCertificateType(participant.score, rank, participants.length, participant.judgeCount);
+                          const CertIcon = certType.icon;
+
+                          return (
+                            <tr key={participant.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                              <td style={{ padding: '1rem 1.25rem' }}>
+                                <div style={{
+                                  width: '2rem',
+                                  height: '2rem',
+                                  borderRadius: '50%',
+                                  backgroundColor: rank <= 3 ? certType.color : '#F1F5F9',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: '700',
+                                  fontSize: '0.875rem',
+                                  color: rank <= 3 ? (rank === 2 ? '#1E293B' : '#FFFFFF') : '#64748B',
+                                }}>
+                                  {rank}
+                                </div>
+                              </td>
+                              <td style={{ padding: '1rem 1.25rem' }}>
+                                <div>
+                                  <p style={{ fontWeight: '500', color: '#1E293B', margin: 0 }}>{participant.fullName}</p>
+                                  <p style={{ fontSize: '0.8125rem', color: '#64748B', margin: 0 }}>{participant.email}</p>
+                                </div>
+                              </td>
+                              <td style={{ padding: '1rem 1.25rem' }}>
+                                {participant.judgeCount > 0 ? (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <div style={{
+                                      width: '100px',
+                                      height: '8px',
+                                      backgroundColor: '#F1F5F9',
+                                      borderRadius: '4px',
+                                      overflow: 'hidden',
+                                    }}>
+                                      <div style={{
+                                        width: `${participant.score}%`,
+                                        height: '100%',
+                                        backgroundColor: certType.color,
+                                        borderRadius: '4px',
+                                      }} />
+                                    </div>
+                                    <span style={{ fontWeight: '600', color: '#1E293B' }}>{participant.score}</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                                      ({participant.judgeCount} judge{participant.judgeCount > 1 ? 's' : ''})
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span style={{ color: '#94A3B8', fontSize: '0.875rem' }}>Not scored yet</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '1rem 1.25rem' }}>
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.375rem',
+                                  padding: '0.25rem 0.75rem',
+                                  backgroundColor: `${certType.color}20`,
+                                  color: certType.color,
+                                  borderRadius: '1rem',
+                                  fontSize: '0.8125rem',
+                                  fontWeight: '500',
+                                }}>
+                                  <CertIcon style={{ width: '0.875rem', height: '0.875rem' }} />
+                                  {certType.type}
+                                </span>
+                              </td>
+                              <td style={{ padding: '1rem 1.25rem' }}>
+                                {participant.certificateGenerated ? (
+                                  <span style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.375rem',
+                                    color: '#10B981',
+                                    fontSize: '0.8125rem',
+                                  }}>
+                                    <CheckCircle style={{ width: '1rem', height: '1rem' }} />
+                                    Issued
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#94A3B8', fontSize: '0.8125rem' }}>Pending</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
+                                {participant.judgeCount > 0 ? (
+                                  <button
+                                    onClick={() => generateCertificate(participant, rank)}
+                                    disabled={generating === participant.id}
+                                    style={{
+                                      ...outlineButtonStyle,
+                                      padding: '0.5rem 1rem',
+                                      fontSize: '0.8125rem',
+                                      opacity: generating === participant.id ? 0.7 : 1,
+                                    }}
+                                  >
+                                    <Download style={{ width: '0.875rem', height: '0.875rem' }} />
+                                    {generating === participant.id ? 'Generating...' : 'Generate'}
+                                  </button>
+                                ) : (
+                                  <span style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>Awaiting score</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={6} style={{ padding: '3rem', textAlign: 'center', color: '#64748B' }}>
+                            {participants.length === 0 ? 'No participants with scores found' : 'No matching participants'}
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Certificate Types Legend */}
+              <div style={cardStyle}>
+                <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#1E293B', marginBottom: '1rem' }}>
+                  Certificate Types
+                </h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                  {[
+                    { type: 'Gold', color: '#FFD700', desc: 'Rank #1' },
+                    { type: 'Silver', color: '#C0C0C0', desc: 'Rank #2' },
+                    { type: 'Bronze', color: '#CD7F32', desc: 'Rank #3' },
+                    { type: 'Excellence', color: '#8B5CF6', desc: 'Score 80+' },
+                    { type: 'Merit', color: '#3B82F6', desc: 'Score 60-79' },
+                    { type: 'Participation', color: '#10B981', desc: 'All participants' },
+                  ].map(item => (
+                    <div key={item.type} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#F8FAFC',
+                      borderRadius: '0.5rem',
+                    }}>
+                      <div style={{
+                        width: '1rem',
+                        height: '1rem',
+                        borderRadius: '50%',
+                        backgroundColor: item.color,
+                      }} />
+                      <span style={{ fontWeight: '500', color: '#1E293B' }}>{item.type}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#64748B' }}>({item.desc})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div style={{ ...cardStyle, textAlign: 'center', padding: '4rem' }}>
+              <Award style={{ width: '4rem', height: '4rem', color: '#CBD5E1', margin: '0 auto 1rem' }} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#1E293B', marginBottom: '0.5rem' }}>
+                Select an Event
+              </h3>
+              <p style={{ color: '#64748B', maxWidth: '400px', margin: '0 auto' }}>
+                Choose an event from the dropdown to view participants and generate score-based certificates
+              </p>
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    export default Certificates;
