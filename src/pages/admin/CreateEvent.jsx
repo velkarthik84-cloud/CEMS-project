@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db, uploadFile } from '../../services/firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import imageCompression from 'browser-image-compression';
 import {
   Calendar,
   Clock,
@@ -49,6 +50,7 @@ const CreateEvent = () => {
   const [loading, setLoading] = useState(false);
   const [bannerImage, setBannerImage] = useState(null);
   const [bannerPreview, setBannerPreview] = useState(null);
+  const [bannerBase64, setBannerBase64] = useState(null);
   const [qrModal, setQrModal] = useState({ open: false, eventId: null, eventTitle: '' });
 
   // Judges state
@@ -132,13 +134,37 @@ const CreateEvent = () => {
     setCategoryFields(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setBannerImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setBannerPreview(reader.result);
-      reader.readAsDataURL(file);
+      try {
+        // Compression options
+        const options = {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+        };
+
+        // Compress the image
+        const compressedBlob = await imageCompression(file, options);
+        
+        // Create a File object from the compressed blob with original filename
+        const compressedFile = new File([compressedBlob], file.name, { type: file.type });
+        
+        // Set the compressed file
+        setBannerImage(compressedFile);
+
+        // Create preview and base64 for database storage
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setBannerPreview(reader.result);
+          setBannerBase64(reader.result); // Store base64 directly
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('Image compression failed:', error);
+        toast.error('Failed to process image. Please try again.');
+      }
     }
   };
 
@@ -207,11 +233,6 @@ const CreateEvent = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      let bannerUrl = null;
-      if (bannerImage) {
-        bannerUrl = await uploadFile(bannerImage, `events/banners/${Date.now()}-${bannerImage.name}`);
-      }
-
       // Validate judges
       const validJudges = judges.filter(j => j.name && j.username && j.password);
 
@@ -296,7 +317,7 @@ const CreateEvent = () => {
         type: data.type,
         venue: data.type === 'offline' ? data.venue : null,
         meetingLink: data.type === 'online' ? data.meetingLink : null,
-        bannerUrl,
+        bannerImage: bannerBase64 || null, // Store base64 directly in database
         eventDate: new Date(data.eventDate),
         startTime: data.startTime,
         endTime: data.endTime,
@@ -1471,7 +1492,7 @@ const CreateEvent = () => {
               <img src={bannerPreview} alt="Banner preview" style={{ width: '100%', height: '200px', objectFit: 'cover' }} />
               <button
                 type="button"
-                onClick={() => { setBannerImage(null); setBannerPreview(null); }}
+                onClick={() => { setBannerImage(null); setBannerPreview(null); setBannerBase64(null); }}
                 style={{
                   position: 'absolute',
                   top: '0.75rem',

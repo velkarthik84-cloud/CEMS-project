@@ -79,17 +79,25 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           padding: 1.25rem 1rem;
           border-bottom: 1px solid #F1F5F9;
         }
+.sidebar-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 0.75rem;
+}
+.sidebar-logo-icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  background: #FFFFFF;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid #E2E8F0;
+  padding: 4px;
+}
 
-        .sidebar-logo-icon {
-          width: 2.5rem;
-          height: 2.5rem;
-          background: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
-          border-radius: 0.75rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
 
         .sidebar-close-btn {
           padding: 0.5rem;
@@ -206,15 +214,16 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         {/* Logo */}
         <div className="sidebar-logo">
           <div className="sidebar-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="white" />
-              <path d="M2 17L12 22L22 17" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 12L12 17L22 12" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+  <img
+    src="/logo_main.png"
+    alt="SHC Logo"
+    className="sidebar-logo-img"
+  />
+</div>
+
           {!collapsed && (
             <div style={{ overflow: 'hidden' }}>
-              <span style={{ fontWeight: '700', fontSize: '1.375rem', color: '#1E293B', letterSpacing: '-0.025em' }}>CEMS</span>
+              <span style={{ fontWeight: '700', fontSize: '1.375rem', color: '#1E293B', letterSpacing: '-0.025em' }}>HEARTBEAT</span>
               <p style={{ fontSize: '0.75rem', color: '#94A3B8', marginTop: '0.125rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Hello {userProfile?.displayName?.split(' ')[0] || 'Admin'}!
               </p>

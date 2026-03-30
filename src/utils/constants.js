@@ -1,12 +1,6 @@
 // Event Categories
 export const EVENT_CATEGORIES = [
-  { value: 'workshop', label: 'Workshop' },
-  { value: 'seminar', label: 'Seminar' },
-  { value: 'exam', label: 'Exam' },
   { value: 'cultural', label: 'Cultural' },
-  { value: 'training', label: 'Training' },
-  { value: 'conference', label: 'Conference' },
-  { value: 'webinar', label: 'Webinar' },
 ];
 
 // Event Types
@@ -14,6 +8,7 @@ export const EVENT_TYPES = [
   { value: 'online', label: 'Online' },
   { value: 'offline', label: 'Offline' },
 ];
+
 
 // Event Status
 export const EVENT_STATUS = {

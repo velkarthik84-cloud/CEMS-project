@@ -716,29 +716,22 @@ const EditEvent = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <Card className="hover:shadow-md transition">
-          <Users className="text-primary mb-1" />
-          <p className="text-2xl font-bold">{event.currentCount || 0}</p>
-          <p className="text-sm text-gray-500">Registrations</p>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+  <Card className="hover:shadow-md transition">
+    <Users className="text-primary mb-1" />
+    <p className="text-2xl font-bold">{Number(event.currentCount) || 0}</p>
+    <p className="text-sm text-gray-500">Registrations</p>
+  </Card>
 
-        <Card className="hover:shadow-md transition">
-          <CreditCard className="text-success mb-1" />
-          <p className="text-2xl font-bold">
-            ₹{((event.currentCount || 0) * (event.fee || 0)).toLocaleString()}
-          </p>
-          <p className="text-sm text-gray-500">Revenue</p>
-        </Card>
+  <Card className="hover:shadow-md transition">
+    <Users className="text-warning mb-1" />
+    <p className="text-2xl font-bold">
+      {(Number(event.maxParticipants) || 0) - (Number(event.currentCount) || 0)}
+    </p>
+    <p className="text-sm text-gray-500">Spots Left</p>
+  </Card>
+</div>
 
-        <Card className="hover:shadow-md transition">
-          <Users className="text-warning mb-1" />
-          <p className="text-2xl font-bold">
-            {event.maxParticipants - (event.currentCount || 0)}
-          </p>
-          <p className="text-sm text-gray-500">Spots Left</p>
-        </Card>
-      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         {/* Basic Info */}

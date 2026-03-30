@@ -207,11 +207,11 @@ const Login = () => {
       default:
         return {
           icon: <Calendar className="right-icon-svg" />,
-          title: 'Manage Events Effortlessly',
+          title: 'SARCED HEART COLLEGE',
           description: 'Create, manage, and track your events with our powerful event management platform. QR-based check-ins, real-time analytics, and seamless registration.',
           stats: [
-            { value: '500+', label: 'Events' },
-            { value: '10K+', label: 'Registrations' },
+            { value: '20+', label: 'Events' },
+            { value: '100+', label: 'Registrations' },
             { value: '99%', label: 'Satisfaction' },
           ],
         };
@@ -224,53 +224,49 @@ const Login = () => {
     <>
       <style>{`
         .login-container {
-          min-height: 100vh;
+           height: 100vh;
+            
           background-color: #F5F7FA;
           display: flex;
           flex-direction: column;
         }
 
-        .login-left {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 1.5rem;
-        }
+       .login-left {
+  width: 50%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
 
         .login-form-container {
           width: 100%;
-          max-width: 28rem;
+  max-width: 450px;
         }
 
-        .login-logo {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          margin-bottom: 1.5rem;
-        }
+.login-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
 
-        .login-logo-icon {
-          width: 2.5rem;
-          height: 2.5rem;
-          background-color: #1E3A5F;
-          border-radius: 0.625rem;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
+.login-logo-img {
+  width: 55px;
+  height: 55px;
+  object-fit: contain;
+  border-radius: 10px;
+  margin-top: 8px; 
+}
 
-        .login-logo-icon svg {
-          width: 1.25rem;
-          height: 1.25rem;
-          color: #FFFFFF;
-        }
+.login-logo-text {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #1E3A5F;
+}
 
-        .login-logo-text {
-          font-weight: bold;
-          font-size: 1.25rem;
-          color: #1E3A5F;
-        }
 
         .login-tabs {
           display: flex;
@@ -540,15 +536,44 @@ const Login = () => {
           cursor: pointer;
           font-size: 0.875rem;
         }
+.login-right {
+  width: 50%;
+  height: 100vh;
+  background-color: #1E3A5F;
+  // display: flex;
+  // justify-content: center;
+  // align-items: center;
+  overflow: hidden;
+}
+  .login-right div{
+  width:100%;
+  height:90vh;
 
-        .login-right {
-          display: none;
-          flex: 1;
-          background-color: #1E3A5F;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem;
-        }
+  }
+
+// .login-right-img {
+//   width: 100%;
+//   height: 100%;
+//   object-fit: contain;
+//   object-position: center;
+// }
+  .login-right div img{
+  width:100%;
+  // height:90vh;
+  object-fit: cover;
+  
+  }
+
+
+@media (min-width: 1024px) {
+  .login-right {
+    display: block;
+  }
+}
+
+
+
+
 
         .login-right-content {
           max-width: 28rem;
@@ -718,12 +743,14 @@ const Login = () => {
         <div className="login-left">
           <div className="login-form-container">
             {/* Logo */}
-            <div className="login-logo">
-              <div className="login-logo-icon">
-                <Calendar />
-              </div>
-              <span className="login-logo-text">CEMS</span>
-            </div>
+           <div className="login-logo">
+            <img
+      src="\logo_main.png"
+     alt="SHC Logo"
+    className="login-logo-img"
+    />
+  <span className="login-logo-text">HEARTBEAT</span>
+</div>
 
             {/* Login Type Tabs */}
             <div className="login-tabs">
@@ -955,29 +982,21 @@ const Login = () => {
             )}
           </div>
         </div>
+{/* Right Side - Image */}
+<div className="login-right">
+  <div>
+  <img
+    src="/login_banner (2).png"
+    alt="Login Banner"
+    className="login-right-img"
+  />
+  </div>
+</div>
 
-        {/* Right Side - Image/Illustration */}
-        <div className="login-right">
-          <div className="login-right-content">
-            <div className="login-right-icon">
-              {rightContent.icon}
-            </div>
-            <h2 className="login-right-title">
-              {rightContent.title}
-            </h2>
-            <p className="login-right-desc">
-              {rightContent.description}
-            </p>
-            <div className="login-right-stats">
-              {rightContent.stats.map((stat, index) => (
-                <div key={index} className="login-stat-box">
-                  <div className="login-stat-value">{stat.value}</div>
-                  <div className="login-stat-label">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+
+
+
+
       </div>
     </>
   );
