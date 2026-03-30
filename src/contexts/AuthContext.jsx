@@ -10,12 +10,7 @@ import {
   onAuthStateChanged
 } from '../services/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { USER_ROLES, ADMIN_EMAILS } from '../utils/constants';
-
-// Check if email should be admin
-const isAdminEmail = (email) => {
-  return ADMIN_EMAILS.includes(email?.toLowerCase());
-};
+import { USER_ROLES } from '../utils/constants';
 
 const AuthContext = createContext(null);
 
@@ -41,23 +36,15 @@ export const AuthProvider = ({ children }) => {
     const userSnap = await getDoc(userRef);
 
     if (userSnap.exists()) {
-      const existingProfile = { id: userSnap.id, ...userSnap.data() };
-
-      // Auto-upgrade to admin if email is in admin list
-      if (isAdminEmail(firebaseUser.email) && existingProfile.role !== USER_ROLES.ADMIN) {
-        await setDoc(userRef, { role: USER_ROLES.ADMIN, updatedAt: serverTimestamp() }, { merge: true });
-        existingProfile.role = USER_ROLES.ADMIN;
-      }
-
-      return existingProfile;
+      return { id: userSnap.id, ...userSnap.data() };
     }
 
-    // Create new user profile - auto-assign admin role if email matches
+    // Create new user profile (default = USER)
     const newProfile = {
       email: firebaseUser.email,
       displayName: firebaseUser.displayName || '',
       photoURL: firebaseUser.photoURL || '',
-      role: isAdminEmail(firebaseUser.email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
+      role: USER_ROLES.USER,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -96,16 +83,16 @@ export const AuthProvider = ({ children }) => {
     try {
       const firebaseUser = await registerUser(email, password, displayName);
 
-      // Create user profile in Firestore - auto-assign admin role if email matches
       const userRef = doc(db, 'users', firebaseUser.uid);
       const newProfile = {
         email: firebaseUser.email,
         displayName: displayName,
         photoURL: '',
-        role: isAdminEmail(email) ? USER_ROLES.ADMIN : USER_ROLES.USER,
+        role: USER_ROLES.USER,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
+
       await setDoc(userRef, newProfile);
 
       return firebaseUser;
@@ -115,7 +102,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login with email and password
+  // Login
   const login = async (email, password) => {
     setError(null);
     try {
@@ -127,7 +114,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Login with Google
+  // Google Login
   const googleLogin = async () => {
     setError(null);
     try {
@@ -161,10 +148,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Check if user is admin
+  // Admin check (based on Firestore role)
   const isAdmin = userProfile?.role === USER_ROLES.ADMIN;
 
-  // Update user profile
+  // Update profile
   const updateUserProfile = async (data) => {
     if (!user) return;
 
