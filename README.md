@@ -1,16 +1,85 @@
-# CEMS - Classroom Event Management System
+🎓 College Event Management System
 
-A comprehensive event management system for organizing, managing, and tracking classroom events with role-based access control.
+A web-based application designed to automate and simplify the process of managing college events. The system provides a centralized platform for organizing events, handling registrations, evaluating participants, and generating results efficiently.
 
-Currently, two official plugins are available:
+🚀 Features
+Event creation and management
+Student registration for events
+Department-wise participation tracking
+Judge-based evaluation and scoring
+Automatic winner generation
+Certificate generation
+Secure login with role-based access
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+👥 User Roles
 
-## React Compiler
+🟦 Admin
+Create and manage events
+Manage departments and judges
+Approve registrations
+Generate winners and certificates
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+🟩 Department
+View events
+Register students
+Track registration status
+View results and download certificates
 
-## Expanding the ESLint configuration
+🟥 Judge
+View assigned events
+Evaluate participants
+Submit scores
+View results
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+🛠️ Tech Stack
+Frontend: React.js
+Backend: Firebase (Backend-as-a-Service)
+Authentication: Firebase Authentication
+Database: Firebase Firestore
+Development Tool: Visual Studio Code
+
+🗄️ Database Overview
+
+The system uses Firebase Firestore to store and manage data.
+
+Main Collections:
+Admin
+Departments
+Events
+Registrations
+Winners
+Relationships:
+Events are created by Admin
+Departments register for Events
+Registrations link Events and Departments
+Winners are generated from Registrations
+
+⚙️ System Workflow
+Admin creates and publishes events
+Departments register students for events
+Registrations are approved by Admin
+Judges evaluate participants and submit scores
+System generates winners automatically
+Results and certificates are published
+
+💻 Installation & Setup
+# Clone the repository
+git clone https://github.com/your-username/project-name.git
+
+# Navigate to project folder
+cd project-name
+
+# Install dependencies
+npm install
+
+# Run the project
+npm run dev
+🌐 Browser Support
+Google Chrome
+Microsoft Edge
+Mozilla Firefox
+Brave
+
+📌 Conclusion
+
+This system reduces manual workload and provides a structured, transparent, and efficient way to manage college events using modern web technologies.
